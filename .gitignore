@@ -1,0 +1,14 @@
+*/project/project/*
+*/project/target/*
+*/target/*
+*.box
+.vagrant/
+spark/conf
+spark/deploy
+*.crc
+.idea
+.DS_Store
+*.jar
+batch_scheduler/
+*.log
+target/*
