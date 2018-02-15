@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino
+package com.ilyamur.cappuccino.testexample
 
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._

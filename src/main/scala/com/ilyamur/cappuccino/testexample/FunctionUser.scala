@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino
+package com.ilyamur.cappuccino.testexample
 
 class FunctionUser(val functionProvider: FunctionProvider) {
 

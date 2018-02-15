@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino
+package com.ilyamur.cappuccino.testexample
 
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.prop.PropertyChecks
