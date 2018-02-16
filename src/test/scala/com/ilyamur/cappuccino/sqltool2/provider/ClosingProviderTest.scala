@@ -18,13 +18,14 @@ class ClosingProviderTest extends FunSpec
       connection
     }
 
-    it("can not be applied twice") {
+    it("returns the same resource on multiple apply") {
 
       val closingProvider = new ClosingProvider(providerFunction)
 
-      closingProvider()
+      val connection1 = closingProvider()
+      val connection2 = closingProvider()
 
-      an[IllegalStateException] should be thrownBy closingProvider()
+      connection1 shouldEqual connection2
     }
 
     it("closes the underlying resource") {

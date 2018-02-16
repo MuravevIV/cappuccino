@@ -7,12 +7,13 @@ abstract class CleanupProvider[T](func: (() => T)) extends (() => T) {
   protected val refValue: AtomicReference[T] = new AtomicReference[T]()
 
   override def apply(): T = synchronized {
-    if (refValue.get() == null) {
+    val currValue = refValue.get()
+    if (currValue == null) {
       val value = func()
       refValue.set(value)
       value
     } else {
-      throw new IllegalStateException("Can only call provider get method once")
+      currValue
     }
   }
 

@@ -18,13 +18,14 @@ class NoopCleanupProviderTest extends FunSpec
       connection
     }
 
-    it("can not be applied twice") {
+    it("returns the same resource on multiple apply") {
 
-      val NoopCleanupProvider = new NoopCleanupProvider(providerFunction)
+      val closingProvider = new NoopCleanupProvider(providerFunction)
 
-      NoopCleanupProvider()
+      val connection1 = closingProvider()
+      val connection2 = closingProvider()
 
-      an[IllegalStateException] should be thrownBy NoopCleanupProvider()
+      connection1 shouldEqual connection2
     }
 
     it("leaves the underlying resource open") {
