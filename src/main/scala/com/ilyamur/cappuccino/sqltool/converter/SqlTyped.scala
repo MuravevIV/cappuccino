@@ -2,11 +2,27 @@ package com.ilyamur.cappuccino.sqltool.converter
 
 import java.sql.ResultSet
 
+import scala.collection.mutable.ArrayBuffer
+
 trait SqlTyped[T] {
 
-  def getSingleFrom(resultSet: ResultSet): T
+  protected def getValue(resultSet: ResultSet): T
 
-  def getListFrom(resultSet: ResultSet): List[T]
+  def getSingleFrom(resultSet: ResultSet): T = {
+    resultSet.next()
+    val value = getValue(resultSet)
+    assertNoMoreRows(resultSet)
+    value
+  }
+
+  def getListFrom(resultSet: ResultSet): List[T] = {
+    val arrayBuffer = new ArrayBuffer[T]()
+    while (resultSet.next()) {
+      val value = getValue(resultSet)
+      arrayBuffer.append(value)
+    }
+    arrayBuffer.toList
+  }
 
   protected def assertNoMoreRows(resultSet: ResultSet) = {
     if (resultSet.next()) {
@@ -14,5 +30,7 @@ trait SqlTyped[T] {
     }
   }
 
-  protected def report(resultSet: ResultSet): String = ???
+  protected def report(resultSet: ResultSet): String = {
+    resultSet.toString
+  }
 }
