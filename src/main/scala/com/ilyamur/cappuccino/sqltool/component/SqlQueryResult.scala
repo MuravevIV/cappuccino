@@ -2,7 +2,7 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import java.sql.{Connection, ResultSet}
 
-import com.ilyamur.cappuccino.sqltool.converter.{IntTyped, SqlTyped}
+import com.ilyamur.cappuccino.sqltool.typed.{IntTyped, SqlTyped}
 
 class SqlQueryResult(resultSet: ResultSet, connection: Connection) {
 

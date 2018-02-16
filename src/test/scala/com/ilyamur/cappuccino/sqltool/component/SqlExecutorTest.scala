@@ -19,7 +19,7 @@ class SqlExecutorTest extends FunSpec
 
       val sqlQuery: SqlQuery = sqlExecutor.query("SELECT 1 FROM dual")
 
-      sqlQuery
+      assert(sqlQuery != null)
     }
   }
 }

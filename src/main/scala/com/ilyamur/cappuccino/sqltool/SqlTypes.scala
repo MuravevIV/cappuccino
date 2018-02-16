@@ -1,6 +1,6 @@
 package com.ilyamur.cappuccino.sqltool
 
-import com.ilyamur.cappuccino.sqltool.converter.IntTyped
+import com.ilyamur.cappuccino.sqltool.typed.IntTyped
 
 object SqlTypes {
 

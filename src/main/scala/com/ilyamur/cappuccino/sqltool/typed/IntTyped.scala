@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino.sqltool.converter
+package com.ilyamur.cappuccino.sqltool.typed
 
 import java.sql.ResultSet
 
