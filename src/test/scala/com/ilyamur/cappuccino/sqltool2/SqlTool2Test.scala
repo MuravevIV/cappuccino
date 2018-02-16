@@ -17,7 +17,7 @@ class SqlTool2Test extends FunSpec
     val connectionProvider: CleanupProvider[Connection] = mock[CleanupProvider[Connection]]
     val connection: Connection = mock[Connection]
 
-    it("executes on connection provider") {
+    it("uses and cleans up connection on execute query") {
 
       when(connectionProvider.apply()).thenReturn(connection)
 

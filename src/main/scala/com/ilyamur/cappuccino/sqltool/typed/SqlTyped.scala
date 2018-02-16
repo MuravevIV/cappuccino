@@ -8,6 +8,8 @@ trait SqlTyped[T] {
 
   protected def getValue(resultSet: ResultSet): T
 
+  def getValueFromObject(obj: Object): T = ???
+
   def getSingleFrom(resultSet: ResultSet): T = {
     resultSet.next()
     val value = getValue(resultSet)
