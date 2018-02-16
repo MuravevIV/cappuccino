@@ -2,25 +2,18 @@ package com.ilyamur.cappuccino.sqltool2
 
 import java.sql.Connection
 
-import com.ilyamur.cappuccino.sqltool2.provider.{CleanupProvider, ClosingProvider, NoopCleanupProvider}
+import com.ilyamur.cappuccino.sqltool2.provider.CleanupProvider
 
 object SqlToolLighthouse {
 
-  val sqlTool = new SqlTool2()
-  val connection = ???
-
-  val getConnection: (() => Connection) = () => {
-    ???
-  }
-
-  val connectionProvider1: CleanupProvider[Connection] = new ClosingProvider[Connection](getConnection)
-  val connectionProvider2: CleanupProvider[Connection] = new NoopCleanupProvider[Connection](getConnection)
+  val sqlTool: SqlTool2 = ???
+  val connectionProvider: CleanupProvider[Connection] = ???
 
   /*
 
-  sqlTool.on(connection)
+  sqlTool.on(connectionProvider)
     .query("SELECT 1 AS one FROM dual")
-    .execute()
+    .executeQuery()
 
 
    row-based:
