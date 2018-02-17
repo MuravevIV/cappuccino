@@ -7,7 +7,7 @@ object SqlToolLighthouse {
 
   sqlTool.on(connection)
     .query("SELECT 1 AS one FROM dual")
-    .execute()
+    .executeQuery()
     // .cache() // ??? - NO!
 
   /*

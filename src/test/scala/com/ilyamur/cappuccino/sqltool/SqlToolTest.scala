@@ -1,15 +1,13 @@
 package com.ilyamur.cappuccino.sqltool
 
-import java.sql.Connection
-
-import com.ilyamur.cappuccino.sqltool.component.SqlExecutor
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
-import java.sql.Connection
-import java.sql.DriverManager
-import javax.sql.DataSource
+import javax.sql.ConnectionEvent
 
 import org.h2.jdbcx.JdbcConnectionPool
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import com.ilyamur.cappuccino.sqltool.SqlTypes._
+import org.mockito.Mockito
+import org.mockito.Mockito.verify
 
 class SqlToolTest extends FunSpec
   with Matchers
@@ -36,13 +34,19 @@ class SqlToolTest extends FunSpec
     super.afterAll()
   }
 
-  describe("the SqlTool") {
+  describe("the SqlTool query functionality") {
 
     val sqlTool = new SqlTool()
 
-    it("creates SqlExecutor on dataSource") {
+    it("executes plain query and extracts primitive result") {
 
-      val sqlExecutor: SqlExecutor = sqlTool.on(dataSource)
+      val value = sqlTool.on(dataSource)
+        .query("select 'test_text' as text from dual")
+        .executeQuery()
+        .asSingleTyped(stringTyped)
+
+      value shouldBe "test_text"
+      dataSource.getActiveConnections shouldBe 0
     }
   }
 }

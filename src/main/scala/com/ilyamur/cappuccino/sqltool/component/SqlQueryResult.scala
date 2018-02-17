@@ -3,7 +3,7 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.{Connection, ResultSet}
 import javax.sql.DataSource
 
-import com.ilyamur.cappuccino.sqltool.converter.{IntTyped, SqlTyped}
+import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
 class SqlQueryResult(resultSet: ResultSet, dataSource: DataSource) {
 

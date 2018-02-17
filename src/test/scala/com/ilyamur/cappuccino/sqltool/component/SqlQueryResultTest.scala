@@ -20,12 +20,12 @@ class SqlQueryResultTest extends FunSpec
 
     it("gets default typed value") {
 
-      val one: Int = sqlQueryResult.asSingleTyped(intTyped)
+      val text: String = sqlQueryResult.asSingleTyped(stringTyped)
     }
 
     it("gets named typed value") {
 
-      val one: List[Int] = sqlQueryResult.asListOfTyped(intTyped)
+      val text: List[String] = sqlQueryResult.asListOfTyped(stringTyped)
     }
   }
 }

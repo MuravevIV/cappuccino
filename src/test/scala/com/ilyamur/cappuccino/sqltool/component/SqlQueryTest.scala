@@ -12,16 +12,16 @@ class SqlQueryTest extends FunSpec
 
   describe("the SqlQuery") {
 
-    val queryString = "SELECT 1 FROM dual"
+    val queryString = "SELECT 'test_text' FROM dual"
     val dataSource = mock[DataSource]
 
     val sqlQuery = new SqlQuery(queryString, dataSource)
 
     it("creates SqlQueryResult by execute") {
 
-      val sqlQueryResult: SqlQueryResult = sqlQuery.execute()
+      val sqlQueryResult: SqlQueryResult = sqlQuery.executeQuery()
 
-      val one: Int = sqlQueryResult.asSingleTyped(intTyped)
+      val text: String = sqlQueryResult.asSingleTyped(stringTyped)
     }
   }
 }

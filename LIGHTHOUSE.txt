@@ -92,15 +92,19 @@ DTO class usage
 result caching
 
     val resultSet: ResultSet = ???
-    val queryRow: QueryRow = ???
+    val queryRow: SqlQueryRow = ???
 
-    class QueryRow {
-        private val rowMetadata: SqlRowMetadata = ???
+    class SqlQuery extends Seq[SqlQueryRow] {
+        private val queryMetadata: SqlQueryMetadata = ???
+    }
+
+    class SqlQueryRow {
+        private val queryMetadata: SqlQueryMetadata = ???
         private val data: Array[Any] = ???
     }
 
-    class SqlRowMetadata {
-        private val cellMetadatas: Array[SqlCellMetadata] = ???
+    class SqlQueryMetadata {
+        private val cellMetadataArray: Array[SqlCellMetadata] = ???
         def get(idx: Int): SqlCellMetadata = ???
     }
 
@@ -130,7 +134,7 @@ custom query syntax
 
 query parametrization
 
-    class Query
+    class SqlQuery
 
     // keeps parametrized query in common form
     // should able to attach rules that modify common form (i.e. multiple-parameter binding)
