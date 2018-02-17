@@ -64,16 +64,16 @@ row extractors
 
 DTO class definition
 
-    trait SqlQueryResultEntity[T] {
+    trait SqlEntity[T] {
 
         def fillOn(queryRow: SqlQueryRow): T
     }
 
-    class Person extends SqlQueryResultEntity[Person] {
+    class Person extends SqlEntity[Person] {
 
         var name: String = _
 
-        override def fillOn(queryRow: SqlQueryRow): Person = {
+        override def fillOn(queryRow: SqlQueryRow): Unit = {
             this.name = queryRow.asTyped(stringTyped, "name")
         }
     }
