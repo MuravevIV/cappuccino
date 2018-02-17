@@ -1,13 +1,9 @@
 package com.ilyamur.cappuccino.sqltool
 
-import javax.sql.ConnectionEvent
-
+import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
-import com.ilyamur.cappuccino.sqltool.SqlTypes._
-import org.mockito.Mockito
-import org.mockito.Mockito.verify
 
 class SqlToolTest extends FunSpec
   with Matchers
@@ -25,7 +21,7 @@ class SqlToolTest extends FunSpec
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    dataSource = JdbcConnectionPool.create("jdbc:h2:~/test", "sa", "sa")
+    dataSource = JdbcConnectionPool.create(CONNECTION_URL, CONNECTION_USER, CONNECTION_PASSWORD)
   }
 
   override def afterAll(): Unit = {

@@ -2,6 +2,8 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import javax.sql.DataSource
 
+import scala.collection.mutable.ArrayBuffer
+
 class SqlQuery(queryString: String, dataSource: DataSource) {
 
   def executeQuery(): SqlQueryResult = {
@@ -9,7 +11,12 @@ class SqlQuery(queryString: String, dataSource: DataSource) {
     try {
       val preparedStatement = connection.prepareStatement(queryString)
       val resultSet = preparedStatement.executeQuery()
-      new SqlQueryResult(resultSet, dataSource)
+      val queryRows: ArrayBuffer[SqlQueryRow] = new ArrayBuffer[SqlQueryRow]()
+      while (resultSet.next()) {
+        val queryRow: SqlQueryRow = SqlQueryRow.from(resultSet)
+        queryRows.append(queryRow)
+      }
+      new SqlQueryResult(queryRows, dataSource)
     } finally {
       connection.close()
     }

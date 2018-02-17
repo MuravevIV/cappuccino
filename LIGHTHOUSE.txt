@@ -109,7 +109,7 @@ result caching
     }
 
     class SqlCellMetadata {
-        def isCompatibleWith(obj: Any): Boolean = ???
+        def isCompatibleWith(sqlTyped: SqlTyped[_]): Boolean = ???
     }
 
 LOB issues resolving
@@ -128,7 +128,7 @@ custom query syntax
     // one can be used as default (global configuration), others - accessed through hashbang, i.e.:
 
     executor.query("""
-    |#!sql/customSyntaxName
+    |#!/sql/customSyntaxName
     |select 1 from dual where 1 == :a
     """)
 

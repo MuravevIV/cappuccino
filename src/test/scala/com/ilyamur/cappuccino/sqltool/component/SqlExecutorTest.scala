@@ -18,8 +18,6 @@ class SqlExecutorTest extends FunSpec
     it("creates SqlQuery by query") {
 
       val sqlQuery: SqlQuery = sqlExecutor.query("SELECT 1 FROM dual")
-
-      sqlQuery
     }
   }
 }
