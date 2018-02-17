@@ -112,7 +112,7 @@ class Person() extends SqlEntity[Person] {
   var name: String = _
 
   override def fillOn(queryRow: SqlQueryRow): Unit = {
-    this.name = queryRow.asTyped(stringTyped, 0)
+    this.name = queryRow.asTyped(stringTyped, 1)
   }
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Person]

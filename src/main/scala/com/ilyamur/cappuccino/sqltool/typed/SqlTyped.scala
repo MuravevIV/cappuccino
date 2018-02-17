@@ -7,10 +7,10 @@ import scala.collection.mutable.ArrayBuffer
 trait SqlTyped[T] {
 
   private val HEAD_ROW_INDEX = 0
-  private val HEAD_COLUMN_INDEX = 0
+  private val HEAD_COLUMN_INDEX = 1
 
-  def getValue(queryRow: SqlQueryRow, idx: Int): T = {
-    val value = queryRow.getData(idx)
+  def getValue(queryRow: SqlQueryRow, column: Int): T = {
+    val value = queryRow.getData(column - 1)
     extractValue(value) match {
       case Some(typedValue) =>
         typedValue
@@ -43,5 +43,6 @@ trait SqlTyped[T] {
   // todo
   protected def report(queryRows: ArrayBuffer[SqlQueryRow]): String = ???
 
-  protected def report(): Exception = ???
+  // todo
+  protected def report(): Exception = throw new RuntimeException()
 }
