@@ -63,7 +63,8 @@ class SqlToolTest extends FunSpec
             |select 'text1' as text from dual
             |union
             |select 'text2' as text from dual
-          """.stripMargin)
+          """.stripMargin
+        )
         .executeQuery()
         .asListOfTyped(stringTyped)
 
@@ -81,6 +82,27 @@ class SqlToolTest extends FunSpec
       johnPerson.name = "John"
 
       person shouldBe johnPerson
+    }
+
+    it("can extract list of sql entity objects") {
+
+      val person = sqlTool.on(dataSource)
+        .query(
+          """
+            |select 'John' as name from dual
+            |union
+            |select 'Jane' as name from dual
+          """.stripMargin
+        )
+        .executeQuery()
+        .asListOf[Person]
+
+      val johnPerson = new Person()
+      johnPerson.name = "John"
+      val janePerson = new Person()
+      janePerson.name = "Jane"
+
+      person shouldBe List(johnPerson, janePerson)
     }
   }
 }
