@@ -24,31 +24,11 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
     sqlTyped.getListFrom(queryRows)
   }
 
-  def createInstance[T: TypeTag](args: AnyRef*)(ctor: Int = 0): T = {
-    val tt = typeTag[T]
-    currentMirror.reflectClass(tt.tpe.typeSymbol.asClass).reflectConstructor(
-      tt.tpe.members.filter(m =>
-        m.isMethod && m.asMethod.isConstructor
-      ).iterator.toSeq(ctor).asMethod
-    )(args: _*).asInstanceOf[T]
-  }
-
   def asSingle[T: TypeTag]: T = {
     queryRows.length match {
       case 0 => throw report()
       case 1 => getInstanceByQueryRow(queryRows.head)
       case _ => throw report()
-    }
-  }
-
-  private def getInstanceByQueryRow[T: TypeTag](queryRow: SqlQueryRow): T = {
-    val instance = createInstance[T]()(0)
-    instance match {
-      case entity: SqlEntity[T] =>
-        entity.fillOn(queryRow)
-        entity.asInstanceOf[T]
-      case _ =>
-        throw report()
     }
   }
 
@@ -58,6 +38,32 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
         getInstanceByQueryRow(queryRow)
       }
       .toList
+  }
+
+  private def getInstanceByQueryRow[T: TypeTag](queryRow: SqlQueryRow): T = {
+
+    // todo cache
+    val constructor = getDefaultConstructor[T]
+
+    val instance = constructor().asInstanceOf[T]
+    instance match {
+      case entity: SqlEntity[T] =>
+        entity.fillOn(queryRow)
+        entity.asInstanceOf[T]
+      case _ =>
+        throw report()
+    }
+  }
+
+  private def getDefaultConstructor[T: TypeTag] = {
+    val ttag = typeTag[T]
+    currentMirror
+      .reflectClass(ttag.tpe.typeSymbol.asClass)
+      .reflectConstructor(
+        ttag.tpe.members.filter(m =>
+          m.isMethod && m.asMethod.isConstructor
+        ).iterator.toSeq.head.asMethod
+      )
   }
 
   // todo

@@ -2,15 +2,17 @@ import sbt._
 
 object Dependencies {
 
+  val macwireVersion = "2.3.0"
+  val guavaVersion = "24.0-jre"
+
   val scalatestVersion = "3.0.1"
   val scalacheckVersion = "1.13.5"
   val mockitoVersion = "2.8.47"
   val h2Version = "1.4.196"
 
-  val macwireVersion = "2.3.0"
-
   val compileDependencies = Seq(
-    "com.softwaremill.macwire" %% "macros" % macwireVersion
+    "com.softwaremill.macwire" %% "macros" % macwireVersion,
+    "com.google.guava" % "guava" % guavaVersion
   )
 
   val testDependencies = Seq(
