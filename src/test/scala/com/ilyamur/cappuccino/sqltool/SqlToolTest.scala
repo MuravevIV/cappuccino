@@ -42,6 +42,15 @@ class SqlToolTest extends FunSpec
         .asSingleTyped(stringTyped)
 
       value shouldBe "test_text"
+    }
+
+    it("closes connection after execution") {
+
+      val value = sqlTool.on(dataSource)
+        .query("select 'test_text' as text from dual")
+        .executeQuery()
+        .asSingleTyped(stringTyped)
+
       dataSource.getActiveConnections shouldBe 0
     }
   }
