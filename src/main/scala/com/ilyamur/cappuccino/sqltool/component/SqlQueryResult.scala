@@ -2,6 +2,7 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import javax.sql.DataSource
 
+import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
 import scala.collection.mutable.ArrayBuffer
@@ -40,12 +41,26 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
       .toList
   }
 
+  // todo - make global (service component?)
+  val cachedConstructors = CacheBuilder.newBuilder()
+    .maximumSize(1000)
+    .build(new CacheLoader[TypeTag[_], MethodMirror]() {
+      def load(ttag: TypeTag[_]): MethodMirror = {
+        currentMirror
+          .reflectClass(ttag.tpe.typeSymbol.asClass)
+          .reflectConstructor(
+            ttag.tpe.members.filter(m =>
+              m.isMethod && m.asMethod.isConstructor
+            ).iterator.toSeq.head.asMethod
+          )
+      }
+    })
+
   private def getInstanceByQueryRow[T: TypeTag](queryRow: SqlQueryRow): T = {
-
-    // todo cache
-    val constructor = getDefaultConstructor[T]
-
+    val ttag = typeTag[T]
+    val constructor = cachedConstructors.get(ttag)
     val instance = constructor().asInstanceOf[T]
+
     instance match {
       case entity: SqlEntity[T] =>
         entity.fillOn(queryRow)
@@ -53,17 +68,6 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
       case _ =>
         throw report()
     }
-  }
-
-  private def getDefaultConstructor[T: TypeTag] = {
-    val ttag = typeTag[T]
-    currentMirror
-      .reflectClass(ttag.tpe.typeSymbol.asClass)
-      .reflectConstructor(
-        ttag.tpe.members.filter(m =>
-          m.isMethod && m.asMethod.isConstructor
-        ).iterator.toSeq.head.asMethod
-      )
   }
 
   // todo
