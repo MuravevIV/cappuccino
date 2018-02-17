@@ -4,9 +4,7 @@ parts
     val executor: SqlExecutor = sqlTool.on(dataSource)
     val query: SqlQuery = sqlExecutor
         .query("select 1 from dual where 1 == <<a>> and 'bbb' == <<b>>")
-        .param("a", 1)
         .param("b" -> "bbb")
-        .param("c" -> 2, "d" -> 3)
     val queryResult: SqlQueryResult = query.executeQuery()
     val updateResult: SqlUpdateResult = query.executeUpdate()
 

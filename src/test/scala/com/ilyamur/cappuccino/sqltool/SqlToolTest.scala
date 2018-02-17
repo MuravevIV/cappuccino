@@ -37,21 +37,35 @@ class SqlToolTest extends FunSpec
     it("executes plain query and extracts primitive result") {
 
       val value = sqlTool.on(dataSource)
-        .query("select 'test_text' as text from dual")
+        .query("select 'testText' as text from dual")
         .executeQuery()
         .asSingleTyped(stringTyped)
 
-      value shouldBe "test_text"
+      value shouldBe "testText"
     }
 
     it("closes connection after execution") {
 
       val value = sqlTool.on(dataSource)
-        .query("select 'test_text' as text from dual")
+        .query("select 'testText' as text from dual")
         .executeQuery()
         .asSingleTyped(stringTyped)
 
       dataSource.getActiveConnections shouldBe 0
+    }
+
+    it("can extract list of primitive results") {
+
+      val value = sqlTool.on(dataSource)
+        .query("""
+            |select 'text1' as text from dual
+            |union
+            |select 'text2' as text from dual
+          """.stripMargin)
+        .executeQuery()
+        .asListOfTyped(stringTyped)
+
+      value shouldBe List("text1", "text2")
     }
   }
 }

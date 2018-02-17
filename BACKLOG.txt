@@ -12,4 +12,36 @@ version 0.1
         - plain query syntax
         - no query transformations
 
+version 0.2
+
+    extractors
+        list extractor
+        object extractor
+            DTO class definition
+
+    all typed values
+
+    updates
+        update-validators
+
+    select parametrization
+        arrow
+        multiple-arrow
+
+version 0.3
+
+    LOB issues resolving
+
+    query sourcing
+
+    multi-database-based usage (select)
+
+version 1
+
+    custom query syntax
+
+    query parametrization
+
+    transactional usage
+
 /
