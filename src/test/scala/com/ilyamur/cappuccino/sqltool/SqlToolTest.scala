@@ -1,5 +1,7 @@
 package com.ilyamur.cappuccino.sqltool
 
+import java.io.File
+
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import com.ilyamur.cappuccino.sqltool.component.{SqlEntity, SqlQueryRow}
 import org.h2.jdbcx.JdbcConnectionPool
@@ -13,6 +15,7 @@ class SqlToolTest extends FunSpec
 
   Class.forName("org.h2.Driver")
 
+  val H2_FILE_LOCATION = "target/h2.mv.db"
   val CONNECTION_URL = "jdbc:h2:./target/h2"
   val CONNECTION_USER = "sa"
   val CONNECTION_PASSWORD = ""
@@ -22,6 +25,7 @@ class SqlToolTest extends FunSpec
   override def beforeAll(): Unit = {
     super.beforeAll()
 
+    new File(H2_FILE_LOCATION).delete()
     dataSource = JdbcConnectionPool.create(CONNECTION_URL, CONNECTION_USER, CONNECTION_PASSWORD)
   }
 
@@ -103,6 +107,15 @@ class SqlToolTest extends FunSpec
       janePerson.name = "Jane"
 
       person shouldBe List(johnPerson, janePerson)
+    }
+
+    it("can execute simple DDL") {
+
+      val updateResult = sqlTool.on(dataSource)
+        .query("create table person (name varchar2)")
+        .executeUpdate()
+
+      updateResult
     }
   }
 }
