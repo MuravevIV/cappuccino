@@ -1,0 +1,183 @@
+
+parts
+
+    val executor: SqlExecutor = sqlTool.on(dataSource)
+    val query: SqlQuery = sqlExecutor
+        .query("select 1 from dual where 1 == <<a>> and 'bbb' == <<b>>")
+        .param("a", 1)
+        .param("b" -> "bbb")
+        .param("c" -> 2, "d" -> 3)
+    val queryResult: SqlQueryResult = query.executeQuery()
+    val updateResult: SqlUpdateResult = query.executeUpdate()
+
+set extractors
+
+    .asSingleTyped(intTyped)
+    .asListOfTyped(intTyped)
+    .asSingle[SomeObject]
+    .asListOf[SomeObject]
+
+update-validators
+
+    .verifyUpdates()
+    .verifySingleUpdate()
+    .verifyUpdates(updateCount => updateCount == 1) // same as above
+
+multi-database-based usage (select)
+
+    // bound with dataSource (possibly from connection pool)
+
+    val number: Int = databases.getTool(this) // databases.getTool(systemId)
+        .query("select 1 from dual")
+        .executeQuery()
+        .asSingleTyped(intTyped)
+
+    trait DatabaseSystemRef {
+        def getSystemId: Int
+    }
+
+instance-based usage (select)
+
+    (new SqlTool()).on(dataSource)
+        .query("select 'text' as text from dual WHERE 1 == <<a>>")
+        .param("a", 1)
+        .executeQuery()
+
+transactional usage
+
+    val one: Int = sqlExecutor.transaction { txnExecutor =>
+        txnExecutor.query("update t set f = 1").executeUpdate().verifyUpdates()
+        txnExecutor.query("update t set f = 2").executeUpdate().verifyUpdates()
+        1
+    }
+
+row
+
+    queryResult.map { queryRow: SqlQueryRow =>
+        //
+    }
+
+row extractors
+
+   .asTyped(intTyped)
+   .asTyped(intTyped, 0)
+   .asTyped(intTyped, "one")
+   .as[SomeObject]
+
+DTO class definition
+
+    trait SqlQueryResultEntity[T] {
+
+        def fillOn(queryRow: SqlQueryRow): T
+    }
+
+    class Person extends SqlQueryResultEntity[Person] {
+
+        var name: String = _
+
+        override def fillOn(queryRow: SqlQueryRow): Person = {
+            this.name = queryRow.asTyped(stringTyped, "name")
+        }
+    }
+
+DTO class usage
+
+    queryRow.as[Person]
+
+    // behind-the-scene (reflection)
+
+        val person = new Person()
+        person.fillOn(queryRow)
+
+result caching
+
+    val resultSet: ResultSet = ???
+    val queryRow: QueryRow = ???
+
+    class QueryRow {
+        private val rowMetadata: SqlRowMetadata = ???
+        private val data: Array[Any] = ???
+    }
+
+    class SqlRowMetadata {
+        private val cellMetadatas: Array[SqlCellMetadata] = ???
+        def get(idx: Int): SqlCellMetadata = ???
+    }
+
+    class SqlCellMetadata {
+        def isCompatibleWith(obj: Any): Boolean = ???
+    }
+
+LOB issues resolving
+
+    // convert to byte arrays on execution
+
+query sourcing
+
+    // should be able to register providers that extract query text, i.e.:
+
+    executor.query("file:/resources/selectPerson.sql")
+
+custom query syntax
+
+    // should be able to register query syntax parsers that transform query into common form
+    // one can be used as default (global configuration), others - accessed through hashbang, i.e.:
+
+    executor.query("""
+    |#!sql/customSyntaxName
+    |select 1 from dual where 1 == :a
+    """)
+
+query parametrization
+
+    class Query
+
+    // keeps parametrized query in common form
+    // should able to attach rules that modify common form (i.e. multiple-parameter binding)
+    // (!) all actual transformation - during execution
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,15 @@
+
+version 0.1
+
+    Create MVP for execution of simplest query on dataSource
+        - no databases
+        - no connection pools
+        - no transactions
+        - no parameters
+        - no updates
+        - no LOBs
+        - only asTyped/asSingleTyped for a string type
+        - plain query syntax
+        - no query transformations
+
+/
