@@ -1,6 +1,6 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.Connection
+import javax.sql.DataSource
 
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.scalatest.mockito.MockitoSugar
@@ -13,9 +13,9 @@ class SqlQueryTest extends FunSpec
   describe("the SqlQuery") {
 
     val queryString = "SELECT 1 FROM dual"
-    val connection = mock[Connection]
+    val dataSource = mock[DataSource]
 
-    val sqlQuery = new SqlQuery(queryString, connection)
+    val sqlQuery = new SqlQuery(queryString, dataSource)
 
     it("creates SqlQueryResult by execute") {
 

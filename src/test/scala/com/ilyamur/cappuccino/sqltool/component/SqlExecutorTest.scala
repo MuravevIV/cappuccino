@@ -1,6 +1,6 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.Connection
+import javax.sql.DataSource
 
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
@@ -11,9 +11,9 @@ class SqlExecutorTest extends FunSpec
 
   describe("the SqlExecutor") {
 
-    val connection = mock[Connection]
+    val dataSource = mock[DataSource]
 
-    val sqlExecutor = new SqlExecutor(connection)
+    val sqlExecutor = new SqlExecutor(dataSource)
 
     it("creates SqlQuery by query") {
 

@@ -1,12 +1,12 @@
 package com.ilyamur.cappuccino.sqltool
 
-import java.sql.Connection
+import javax.sql.DataSource
 
 import com.ilyamur.cappuccino.sqltool.component.SqlExecutor
 
 class SqlTool {
-  
-  def on(connection: Connection): SqlExecutor = {
-    new SqlExecutor(connection)
+
+  def on(dataSource: DataSource): SqlExecutor = {
+    new SqlExecutor(dataSource)
   }
 }

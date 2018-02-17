@@ -1,13 +1,13 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.Connection
+import javax.sql.DataSource
 
-class SqlQuery(queryString: String, connection: Connection) {
+class SqlQuery(queryString: String, dataSource: DataSource) {
 
   def execute(): SqlQueryResult = {
-    val preparedStatement = connection.prepareStatement(queryString)
+    val preparedStatement = dataSource.getConnection.prepareStatement(queryString)
     val resultSet = preparedStatement.executeQuery()
 
-    new SqlQueryResult(resultSet, connection)
+    new SqlQueryResult(resultSet, dataSource)
   }
 }

@@ -1,10 +1,10 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.Connection
+import javax.sql.DataSource
 
-class SqlExecutor(connection: Connection) {
+class SqlExecutor(dataSource: DataSource) {
 
   def query(queryString: String): SqlQuery = {
-    new SqlQuery(queryString, connection)
+    new SqlQuery(queryString, dataSource)
   }
 }

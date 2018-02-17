@@ -1,6 +1,7 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.{Connection, ResultSet}
+import java.sql.ResultSet
+import javax.sql.DataSource
 
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.scalatest.mockito.MockitoSugar
@@ -13,9 +14,9 @@ class SqlQueryResultTest extends FunSpec
   describe("the SqlQueryResult") {
 
     val resultSet = mock[ResultSet]
-    val connection = mock[Connection]
+    val dataSource = mock[DataSource]
 
-    val sqlQueryResult = new SqlQueryResult(resultSet, connection)
+    val sqlQueryResult = new SqlQueryResult(resultSet, dataSource)
 
     it("gets default typed value") {
 

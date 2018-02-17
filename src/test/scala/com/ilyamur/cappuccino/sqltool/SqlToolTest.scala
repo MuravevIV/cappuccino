@@ -5,26 +5,33 @@ import java.sql.Connection
 import com.ilyamur.cappuccino.sqltool.component.SqlExecutor
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
-
 import java.sql.Connection
 import java.sql.DriverManager
+import javax.sql.DataSource
+
+import org.h2.jdbcx.JdbcConnectionPool
 
 class SqlToolTest extends FunSpec
   with Matchers
   with MockitoSugar
   with BeforeAndAfterAll {
 
-  var connection: Connection = _
+  Class.forName("org.h2.Driver")
+
+  val CONNECTION_URL = "jdbc:h2:./target/h2"
+  val CONNECTION_USER = "sa"
+  val CONNECTION_PASSWORD = ""
+
+  var dataSource: JdbcConnectionPool = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    Class.forName("org.h2.Driver")
-    connection = DriverManager.getConnection("jdbc:h2:./target/h2", "sa", "")
+    dataSource = JdbcConnectionPool.create("jdbc:h2:~/test", "sa", "sa")
   }
 
   override def afterAll(): Unit = {
-    connection.close()
+    dataSource.dispose()
 
     super.afterAll()
   }
@@ -33,9 +40,9 @@ class SqlToolTest extends FunSpec
 
     val sqlTool = new SqlTool()
 
-    it("creates SqlExecutor on connection") {
+    it("creates SqlExecutor on dataSource") {
 
-      val sqlExecutor: SqlExecutor = sqlTool.on(connection)
+      val sqlExecutor: SqlExecutor = sqlTool.on(dataSource)
     }
   }
 }

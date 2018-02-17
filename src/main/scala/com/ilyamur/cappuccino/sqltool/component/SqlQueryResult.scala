@@ -1,10 +1,11 @@
 package com.ilyamur.cappuccino.sqltool.component
 
 import java.sql.{Connection, ResultSet}
+import javax.sql.DataSource
 
 import com.ilyamur.cappuccino.sqltool.converter.{IntTyped, SqlTyped}
 
-class SqlQueryResult(resultSet: ResultSet, connection: Connection) {
+class SqlQueryResult(resultSet: ResultSet, dataSource: DataSource) {
 
   def asSingleTyped[T](sqlTyped: SqlTyped[T]): T = {
     sqlTyped.getSingleFrom(resultSet)
