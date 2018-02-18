@@ -2,9 +2,15 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import javax.sql.DataSource
 
+import com.ilyamur.cappuccino.sqltool.parser.SqlQueryTehnologiaParser
+
 import scala.collection.mutable.ArrayBuffer
 
-class SqlQuery(queryString: String, dataSource: DataSource) {
+case class SqlQuery(queryString: String,
+                    dataSource: DataSource,
+                    queryParameters: List[SqlQueryParameter] = List.empty) {
+
+  private val parser = new SqlQueryTehnologiaParser()
 
   def executeQuery(): SqlQueryResult = {
     val connection = dataSource.getConnection
@@ -22,15 +28,42 @@ class SqlQuery(queryString: String, dataSource: DataSource) {
     }
   }
 
+  def report(): Exception = ???
+
   def executeUpdate(): SqlUpdateResult = {
     val connection = dataSource.getConnection
     try {
-      val preparedStatement = connection.prepareStatement(queryString)
+
+      val queryAst = parser.parse(queryString)
+      val normalForm = queryAst.getNormalForm
+
+      val preparedStatement = connection.prepareStatement(normalForm)
+
+      val queryParameterMap = queryParameters.map { queryParameter =>
+        (queryParameter.name, queryParameter.value)
+      }.toMap
+
+      queryAst.getParamTokens.zipWithIndex.foreach { case (paramToken, idx) =>
+        queryParameterMap.get(paramToken.name) match {
+          case Some(value) =>
+            preparedStatement.setObject(idx +1 , value)
+          case _ =>
+            throw report()
+        }
+      }
+
       val rowCount = preparedStatement.executeUpdate()
       connection.commit()
+
       new SqlUpdateResult(rowCount)
     } finally {
       connection.close()
+    }
+  }
+
+  def params(pair: (String, String), pairs: (String, String)*): SqlQuery = {
+    (pair :: pairs.toList).foldLeft(this) { (query, p) =>
+      query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
     }
   }
 }

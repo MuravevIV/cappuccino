@@ -140,6 +140,21 @@ class SqlToolTest extends FunSpec
         .executeUpdate()
         .verifySingleUpdate()
     }
+
+    it("executes query with parameter") {
+
+      sqlTool.on(connectionPool)
+        .query("insert into person (name) values (<<name>>)")
+        .params("name" -> "Peter")
+        .executeUpdate()
+
+      val peterCount = sqlTool.on(connectionPool)
+        .query("select count(*) as cnt from person where name = 'Peter'")
+        .executeQuery()
+        .asSingleTyped(longTyped)
+
+      peterCount shouldBe 1
+    }
   }
 }
 
