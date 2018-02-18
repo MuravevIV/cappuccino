@@ -6,22 +6,11 @@ import scala.collection.mutable.ArrayBuffer
 
 class SqlQueryTehnologiaParser extends SqlQueryParser {
 
-  private val pattern = Pattern.compile("<<([^<>]+)>>")
-
-  /*
-       Pattern p = Pattern.compile("cat");
-       Matcher m = p.matcher("one cat two cats in the yard");
-       StringBuffer sb = new StringBuffer();
-       while (m.find()) {
-           m.appendReplacement(sb, "dog");
-       }
-       m.appendTail(sb);
-       System.out.println(sb.toString());
-   */
+  private val paramPattern = Pattern.compile("<<([^<>]+)>>")
 
   override def parse(queryString: String): SqlQueryAst = {
     val arrayBuffer = new ArrayBuffer[SqlQueryToken]()
-    val matcher = pattern.matcher(queryString)
+    val matcher = paramPattern.matcher(queryString)
     var start = 0
     var end = 0
     while (matcher.find()) {
