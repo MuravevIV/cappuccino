@@ -4,7 +4,7 @@ parts
     val executor: SqlExecutor = sqlTool.on(dataSource)
     val query: SqlQuery = sqlExecutor
         .query("select 1 from dual where 1 == <<a>> and 'bbb' == <<b>>")
-        .param("b" -> "bbb")
+        .params("a" -> 1, "b" -> "bbb")
     val queryResult: SqlQueryResult = query.executeQuery()
     val updateResult: SqlUpdateResult = query.executeUpdate()
 
@@ -138,7 +138,14 @@ query parametrization
     // should able to attach rules that modify common form (i.e. multiple-parameter binding)
     // (!) all actual transformation - during execution
 
+batch updates
 
+    sqlQuery.on(dataSource)
+        .query("INSERT INTO person VALUES (<<name>>)")
+        .batchParams(
+            Map("name" -> "John")
+            Map("name" -> "Jane")
+        )
 
 
 

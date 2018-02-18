@@ -44,4 +44,7 @@ version 1
 
     transactional usage
 
-/
+other
+
+    entity constructors caching (Guava)
+    batch updates
