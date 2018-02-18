@@ -1,7 +1,5 @@
 package com.ilyamur.cappuccino.sqltool
 
-import java.io.File
-
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import com.ilyamur.cappuccino.sqltool.component.{SqlEntity, SqlQueryRow}
 import org.h2.jdbcx.JdbcConnectionPool
@@ -13,24 +11,18 @@ class SqlToolTest extends FunSpec
   with MockitoSugar
   with BeforeAndAfterAll {
 
-  Class.forName("org.h2.Driver")
-
-  val H2_FILE_LOCATION = "target/h2.mv.db"
-  val CONNECTION_URL = "jdbc:h2:./target/h2"
-  val CONNECTION_USER = "sa"
-  val CONNECTION_PASSWORD = ""
-
-  var dataSource: JdbcConnectionPool = _
+  val h2 = new H2()
+  var connectionPool: JdbcConnectionPool = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    new File(H2_FILE_LOCATION).delete()
-    dataSource = JdbcConnectionPool.create(CONNECTION_URL, CONNECTION_USER, CONNECTION_PASSWORD)
+    h2.initialize()
+    connectionPool = h2.getConnectionPool
   }
 
   override def afterAll(): Unit = {
-    dataSource.dispose()
+    connectionPool.dispose()
 
     super.afterAll()
   }
@@ -41,7 +33,7 @@ class SqlToolTest extends FunSpec
 
     it("executes plain query and extracts primitive result") {
 
-      val value = sqlTool.on(dataSource)
+      val value = sqlTool.on(connectionPool)
         .query("select 'testText' as text from dual")
         .executeQuery()
         .asSingleTyped(stringTyped)
@@ -51,17 +43,17 @@ class SqlToolTest extends FunSpec
 
     it("closes connection after execution") {
 
-      val value = sqlTool.on(dataSource)
+      val value = sqlTool.on(connectionPool)
         .query("select 'testText' as text from dual")
         .executeQuery()
         .asSingleTyped(stringTyped)
 
-      dataSource.getActiveConnections shouldBe 0
+      connectionPool.getActiveConnections shouldBe 0
     }
 
     it("can extract list of primitive results") {
 
-      val value = sqlTool.on(dataSource)
+      val value = sqlTool.on(connectionPool)
         .query(
           """
             |select 'text1' as text from dual
@@ -77,7 +69,7 @@ class SqlToolTest extends FunSpec
 
     it("can extract single sql entity object") {
 
-      val person = sqlTool.on(dataSource)
+      val person = sqlTool.on(connectionPool)
         .query("select 'John' as name from dual")
         .executeQuery()
         .asSingle[Person]
@@ -90,7 +82,7 @@ class SqlToolTest extends FunSpec
 
     it("can extract list of sql entity objects") {
 
-      val person = sqlTool.on(dataSource)
+      val person = sqlTool.on(connectionPool)
         .query(
           """
             |select 'John' as name from dual
@@ -111,8 +103,17 @@ class SqlToolTest extends FunSpec
 
     it("can execute simple DDL") {
 
-      val updateResult = sqlTool.on(dataSource)
-        .query("create table person (name varchar2)")
+      val updateResult = sqlTool.on(connectionPool)
+        .query("create table t (f varchar2)")
+        .executeUpdate()
+
+      updateResult
+    }
+
+    it("") {
+
+      val updateResult = sqlTool.on(connectionPool)
+        .query("insert into person (name) values ('John')")
         .executeUpdate()
 
       updateResult
