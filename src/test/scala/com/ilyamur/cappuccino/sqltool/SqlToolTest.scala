@@ -141,7 +141,18 @@ class SqlToolTest extends FunSpec
         .verifySingleUpdate()
     }
 
-    it("executes query with parameter") {
+    it("executes select with parameter") {
+
+      val testValue = sqlTool.on(connectionPool)
+        .query("select <<param>> from dual")
+        .params("param" -> "test")
+        .executeQuery()
+        .asSingleTyped(stringTyped)
+
+      testValue shouldBe "test"
+    }
+
+    it("executes update with parameter") {
 
       sqlTool.on(connectionPool)
         .query("insert into person (name) values (<<name>>)")

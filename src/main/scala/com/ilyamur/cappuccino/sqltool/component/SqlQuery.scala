@@ -1,5 +1,6 @@
 package com.ilyamur.cappuccino.sqltool.component
 
+import java.sql.{Connection, PreparedStatement}
 import javax.sql.DataSource
 
 import com.ilyamur.cappuccino.sqltool.parser.SqlQueryTehnologiaParser
@@ -15,7 +16,7 @@ case class SqlQuery(queryString: String,
   def executeQuery(): SqlQueryResult = {
     val connection = dataSource.getConnection
     try {
-      val preparedStatement = connection.prepareStatement(queryString)
+      val preparedStatement = prepareStatement(connection)
       val resultSet = preparedStatement.executeQuery()
       val queryRows: ArrayBuffer[SqlQueryRow] = new ArrayBuffer[SqlQueryRow]()
       while (resultSet.next()) {
@@ -28,37 +29,37 @@ case class SqlQuery(queryString: String,
     }
   }
 
-  def report(): Exception = ???
-
   def executeUpdate(): SqlUpdateResult = {
     val connection = dataSource.getConnection
     try {
-
-      val queryAst = parser.parse(queryString)
-      val normalForm = queryAst.getNormalForm
-
-      val preparedStatement = connection.prepareStatement(normalForm)
-
-      val queryParameterMap = queryParameters.map { queryParameter =>
-        (queryParameter.name, queryParameter.value)
-      }.toMap
-
-      queryAst.getParamTokens.zipWithIndex.foreach { case (paramToken, idx) =>
-        queryParameterMap.get(paramToken.name) match {
-          case Some(value) =>
-            preparedStatement.setObject(idx +1 , value)
-          case _ =>
-            throw report()
-        }
-      }
-
+      val preparedStatement = prepareStatement(connection)
       val rowCount = preparedStatement.executeUpdate()
       connection.commit()
-
       new SqlUpdateResult(rowCount)
     } finally {
       connection.close()
     }
+  }
+
+  private def prepareStatement(connection: Connection) = {
+    val queryAst = parser.parse(queryString)
+    val normalForm = queryAst.getNormalForm
+
+    val preparedStatement = connection.prepareStatement(normalForm)
+
+    val queryParameterMap = queryParameters.map { queryParameter =>
+      (queryParameter.name, queryParameter.value)
+    }.toMap
+
+    queryAst.getParamTokens.zipWithIndex.foreach { case (paramToken, idx) =>
+      queryParameterMap.get(paramToken.name) match {
+        case Some(value) =>
+          preparedStatement.setObject(idx + 1, value)
+        case _ =>
+          throw report()
+      }
+    }
+    preparedStatement
   }
 
   def params(pair: (String, String), pairs: (String, String)*): SqlQuery = {
@@ -66,4 +67,6 @@ case class SqlQuery(queryString: String,
       query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
     }
   }
+
+  private def report(): Exception = ???
 }
