@@ -110,13 +110,35 @@ class SqlToolTest extends FunSpec
       updateResult
     }
 
-    it("") {
+    it("can execute simple DML") {
 
-      val updateResult = sqlTool.on(connectionPool)
+      sqlTool.on(connectionPool)
         .query("insert into person (name) values ('John')")
         .executeUpdate()
+    }
 
-      updateResult
+    it("verifies updates on predicate") {
+
+      sqlTool.on(connectionPool)
+        .query("insert into person (name) values ('Jill')")
+        .executeUpdate()
+        .verifyUpdates(rowCount => rowCount > 0)
+    }
+
+    it("verifies any updates") {
+
+      sqlTool.on(connectionPool)
+        .query("insert into person (name) values ('Janet')")
+        .executeUpdate()
+        .verifyUpdates()
+    }
+
+    it("verifies single update") {
+
+      sqlTool.on(connectionPool)
+        .query("insert into person (name) values ('James')")
+        .executeUpdate()
+        .verifySingleUpdate()
     }
   }
 }
