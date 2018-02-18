@@ -27,6 +27,7 @@ class SqlQuery(queryString: String, dataSource: DataSource) {
     try {
       val preparedStatement = connection.prepareStatement(queryString)
       val rowCount = preparedStatement.executeUpdate()
+      connection.commit()
       new SqlUpdateResult(rowCount)
     } finally {
       connection.close()
