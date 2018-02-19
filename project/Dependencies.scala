@@ -7,9 +7,11 @@ object Dependencies {
   val mockitoVersion = "2.8.47"
 
   val macwireVersion = "2.3.0"
+  val catsVersion = "0.9.0"
 
   val compileDependencies = Seq(
-    "com.softwaremill.macwire" %% "macros" % macwireVersion
+    "com.softwaremill.macwire" %% "macros" % macwireVersion,
+    "org.typelevel" %% "cats" % catsVersion
   )
 
   val testDependencies = Seq(
