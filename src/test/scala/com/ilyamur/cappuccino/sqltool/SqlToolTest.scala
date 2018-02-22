@@ -1,10 +1,9 @@
 package com.ilyamur.cappuccino.sqltool
 
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
-import com.ilyamur.cappuccino.sqltool.component.{SqlEntity, SqlQueryRow}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Ignore, Matchers}
 
 class SqlToolTest extends FunSpec
   with Matchers
@@ -152,45 +151,28 @@ class SqlToolTest extends FunSpec
       testValue shouldBe "test"
     }
 
-    it("executes update with parameter") {
+    ignore("inserts and selects clob") {
 
       sqlTool.on(connectionPool)
-        .query("insert into person (name) values (<<name>>)")
-        .params("name" -> "Peter")
+        .query("insert into book (name, text) values (<<name>>, <<text>>)")
+        .params(
+          "name" -> "War and Peace",
+          "text" -> "Some text."
+        )
+        .withTransformer(H2ClobToStringTransformer)
         .executeUpdate()
 
-      val peterCount = sqlTool.on(connectionPool)
-        .query("select count(*) as cnt from person where name = 'Peter'")
+      val bookText = sqlTool.on(connectionPool)
+        .query("select text from book where name = <<name>>")
+        .params("name" -> "War and Peace")
         .executeQuery()
-        .asSingleTyped(longTyped)
+        .asSingleTyped(stringTyped)
 
-      peterCount shouldBe 1
+      bookText shouldBe "Some text."
     }
   }
 }
 
-class Person() extends SqlEntity[Person] {
-
-  var name: String = _
-
-  override def fillOn(queryRow: SqlQueryRow): Unit = {
-    this.name = queryRow.asTyped(stringTyped, 1)
-  }
-
-  def canEqual(other: Any): Boolean = other.isInstanceOf[Person]
-
-  override def equals(other: Any): Boolean = other match {
-    case that: Person =>
-      (that canEqual this) &&
-        name == that.name
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(name)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
-}
 
 
 

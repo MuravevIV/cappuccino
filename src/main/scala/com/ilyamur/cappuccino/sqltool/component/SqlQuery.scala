@@ -9,7 +9,8 @@ import scala.collection.mutable.ArrayBuffer
 
 case class SqlQuery(queryString: String,
                     dataSource: DataSource,
-                    queryParameters: List[SqlQueryParameter] = List.empty) {
+                    queryParameters: List[SqlQueryParameter] = List.empty,
+                    transformers: List[_] = List.empty) {
 
   private val parser = new SqlQueryTehnologiaParser()
 
@@ -20,7 +21,7 @@ case class SqlQuery(queryString: String,
       val resultSet = preparedStatement.executeQuery()
       val queryRows: ArrayBuffer[SqlQueryRow] = new ArrayBuffer[SqlQueryRow]()
       while (resultSet.next()) {
-        val queryRow: SqlQueryRow = SqlQueryRow.from(resultSet)
+        val queryRow = SqlQueryRow.from(resultSet, transformers)
         queryRows.append(queryRow)
       }
       new SqlQueryResult(queryRows, dataSource)
@@ -66,6 +67,10 @@ case class SqlQuery(queryString: String,
     (pair :: pairs.toList).foldLeft(this) { (query, p) =>
       query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
     }
+  }
+
+  def withTransformer[A, B](transformer: (A => B)) = {
+    copy(transformers = transformers :+ transformer)
   }
 
   private def report(): Exception = ???

@@ -17,11 +17,11 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
 
   override def iterator: Iterator[SqlQueryRow] = queryRows.iterator
 
-  def asSingleTyped[T](sqlTyped: SqlTyped[T]): T = {
+  def asSingleTyped[T: TypeTag](sqlTyped: SqlTyped[T]): T = {
     sqlTyped.getSingleFrom(queryRows)
   }
 
-  def asListOfTyped[T](sqlTyped: SqlTyped[T]): List[T] = {
+  def asListOfTyped[T: TypeTag](sqlTyped: SqlTyped[T]): List[T] = {
     sqlTyped.getListFrom(queryRows)
   }
 

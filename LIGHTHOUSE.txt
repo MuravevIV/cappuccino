@@ -147,7 +147,13 @@ batch updates
             Map("name" -> "Jane")
         )
 
+custom sql types transformers
 
+    sqlQuery.on(dataSource)
+        .query("SELECT text FROM book LIMIT 1")
+        .withTransformer(clobToStringTransformer)
+        .executeQuery()
+        .asSingleTyped(stringTyped)
 
 
 
