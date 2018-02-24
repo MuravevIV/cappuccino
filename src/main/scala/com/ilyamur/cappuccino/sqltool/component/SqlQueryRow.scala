@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import com.ilyamur.cappuccino.sqltool.SqlTool
 import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
-import scala.reflect.runtime.{universe, _}
+import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 
 object SqlQueryRow {
