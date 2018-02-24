@@ -5,7 +5,7 @@ import java.sql.ResultSet
 import com.ilyamur.cappuccino.sqltool.SqlTool
 import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
-import scala.reflect.runtime._
+import scala.reflect.runtime.{universe, _}
 import scala.reflect.runtime.universe._
 
 object SqlQueryRow {
@@ -85,18 +85,7 @@ class SqlQueryRow private() {
       case 0 =>
         throw report("no columns")
       case 1 =>
-        val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
-        sqlToolContext.postTran.get(srcClassSymbol) match {
-          case Some(trgMap) =>
-            trgMap.get(trgClassSymbol) match {
-              case Some(t) =>
-                t.asInstanceOf[(Any => T)].apply(data.head)
-              case _ =>
-                throw report(s"no mapping found for target type '${trgClassSymbol}'")
-            }
-          case _ =>
-            throw report(s"no mapping found for source type '${trgClassSymbol}'")
-        }
+        likeNonCaseClass(trgClassSymbol, 0)
       case _ =>
         throw report("too many columns")
     }
@@ -105,20 +94,24 @@ class SqlQueryRow private() {
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnName: String): T = {
     columnNameMap.get(columnName) match {
       case Some(columnIdx) =>
-        val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
-        sqlToolContext.postTran.get(srcClassSymbol) match {
-          case Some(trgMap) =>
-            trgMap.get(trgClassSymbol) match {
-              case Some(t) =>
-                t.asInstanceOf[(Any => T)].apply(data(columnIdx))
-              case _ =>
-                throw report(s"no mapping found for target type '${trgClassSymbol}'")
-            }
-          case _ =>
-            throw report(s"no mapping found for source type '${trgClassSymbol}'")
-        }
+        likeNonCaseClass(trgClassSymbol, columnIdx)
       case _ =>
         throw report(s"Can not find column named '${columnName}'")
+    }
+  }
+
+  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: universe.ClassSymbol, columnIdx: Int) = {
+    val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
+    sqlToolContext.postTran.get(srcClassSymbol) match {
+      case Some(trgMap) =>
+        trgMap.get(trgClassSymbol) match {
+          case Some(t) =>
+            t.asInstanceOf[(Any => T)].apply(data(columnIdx))
+          case _ =>
+            throw report(s"no mapping found for target type '${trgClassSymbol}'")
+        }
+      case _ =>
+        throw report(s"no mapping found for source type '${trgClassSymbol}'")
     }
   }
 
