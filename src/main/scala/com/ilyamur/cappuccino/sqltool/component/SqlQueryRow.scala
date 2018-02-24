@@ -74,7 +74,7 @@ class SqlQueryRow private() {
     )
 
     val args = accessors.map { case (fieldName, trgFieldType) =>
-      likeNonCaseClassAny(trgFieldType.typeSymbol.asClass, fieldName)
+      likeNonCaseClass[Any](trgFieldType.typeSymbol.asClass, fieldName)
     }.toList
 
     constructor.apply(args: _*).asInstanceOf[T]
@@ -111,26 +111,6 @@ class SqlQueryRow private() {
             trgMap.get(trgClassSymbol) match {
               case Some(t) =>
                 t.asInstanceOf[(Any => T)].apply(data(columnIdx))
-              case _ =>
-                throw report(s"no mapping found for target type '${trgClassSymbol}'")
-            }
-          case _ =>
-            throw report(s"no mapping found for source type '${trgClassSymbol}'")
-        }
-      case _ =>
-        throw report(s"Can not find column named '${columnName}'")
-    }
-  }
-
-  private def likeNonCaseClassAny(trgClassSymbol: ClassSymbol, columnName: String): Any = {
-    columnNameMap.get(columnName) match {
-      case Some(columnIdx) =>
-        val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
-        sqlToolContext.postTran.get(srcClassSymbol) match {
-          case Some(trgMap) =>
-            trgMap.get(trgClassSymbol) match {
-              case Some(t) =>
-                t.asInstanceOf[(Any => Any)].apply(data(columnIdx))
               case _ =>
                 throw report(s"no mapping found for target type '${trgClassSymbol}'")
             }
