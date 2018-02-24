@@ -32,6 +32,8 @@ class SqlQueryRow private() {
 
   def getMetaData: SqlQueryMetadata = queryMetadata
 
+  lazy val columnNameMap = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.zipWithIndex.toMap
+
   def getData: Seq[Any] = data
 
   def asTyped[T: TypeTag](sqlTyped: SqlTyped[T], column: Int): T = {
@@ -45,8 +47,14 @@ class SqlQueryRow private() {
     if (isCaseClass) {
       likeCaseClass[T](ttag, classSymbol)
     } else {
-      likePredefClass[T](classSymbol)
+      likeNonCaseClass[T](classSymbol)
     }
+  }
+
+  def like[T: TypeTag](columnName: String): T = {
+    val ttag = typeTag[T]
+    val classSymbol = ttag.tpe.typeSymbol.asClass
+    likeNonCaseClass(classSymbol, columnName)
   }
 
   private def likeCaseClass[T](ttag: TypeTag[T], classSymbol: ClassSymbol): T = {
@@ -65,19 +73,14 @@ class SqlQueryRow private() {
       ).iterator.toSeq.head.asMethod
     )
 
-    val columnNameMap = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.zipWithIndex.toMap
-
-    val args = accessors.map { case (fieldName, _) =>
-      columnNameMap.get(fieldName) match {
-        case Some(columnIdx) => data(columnIdx)
-        case None => report(s"Can not find column named '${fieldName}'")
-      }
+    val args = accessors.map { case (fieldName, trgFieldType) =>
+      likeNonCaseClassAny(trgFieldType.typeSymbol.asClass, fieldName)
     }.toList
 
     constructor.apply(args: _*).asInstanceOf[T]
   }
 
-  private def likePredefClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {
+  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {
     data.length match {
       case 0 =>
         throw report("no columns")
@@ -96,6 +99,46 @@ class SqlQueryRow private() {
         }
       case _ =>
         throw report("too many columns")
+    }
+  }
+
+  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnName: String): T = {
+    columnNameMap.get(columnName) match {
+      case Some(columnIdx) =>
+        val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
+        sqlToolContext.postTran.get(srcClassSymbol) match {
+          case Some(trgMap) =>
+            trgMap.get(trgClassSymbol) match {
+              case Some(t) =>
+                t.asInstanceOf[(Any => T)].apply(data(columnIdx))
+              case _ =>
+                throw report(s"no mapping found for target type '${trgClassSymbol}'")
+            }
+          case _ =>
+            throw report(s"no mapping found for source type '${trgClassSymbol}'")
+        }
+      case _ =>
+        throw report(s"Can not find column named '${columnName}'")
+    }
+  }
+
+  private def likeNonCaseClassAny(trgClassSymbol: ClassSymbol, columnName: String): Any = {
+    columnNameMap.get(columnName) match {
+      case Some(columnIdx) =>
+        val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
+        sqlToolContext.postTran.get(srcClassSymbol) match {
+          case Some(trgMap) =>
+            trgMap.get(trgClassSymbol) match {
+              case Some(t) =>
+                t.asInstanceOf[(Any => Any)].apply(data(columnIdx))
+              case _ =>
+                throw report(s"no mapping found for target type '${trgClassSymbol}'")
+            }
+          case _ =>
+            throw report(s"no mapping found for source type '${trgClassSymbol}'")
+        }
+      case _ =>
+        throw report(s"Can not find column named '${columnName}'")
     }
   }
 

@@ -30,6 +30,8 @@ class SqlToolTest extends FunSpec
 
     val sqlTool = new SqlTool()
 
+    sqlTool.registerPostQueryTransformer((s: String) => s)
+
     it("executes plain query and extracts primitive result") {
 
       val value = sqlTool.on(connectionPool)
@@ -172,8 +174,6 @@ class SqlToolTest extends FunSpec
     }
 
     it("can extract predef class with like-extractor") {
-
-      sqlTool.registerPostQueryTransformer((s: String) => s)
 
       val name = sqlTool.on(connectionPool)
         .query("select 'John' as name from dual")
