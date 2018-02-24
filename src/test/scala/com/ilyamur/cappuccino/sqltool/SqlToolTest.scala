@@ -1,9 +1,8 @@
 package com.ilyamur.cappuccino.sqltool
 
-import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Ignore, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
 
 class SqlToolTest extends FunSpec
   with Matchers
@@ -37,7 +36,7 @@ class SqlToolTest extends FunSpec
       val value = sqlTool.on(connectionPool)
         .query("select 'testText' as text from dual")
         .executeQuery()
-        .asSingleTyped(stringTyped)
+        .like[String]
 
       value shouldBe "testText"
     }
@@ -47,59 +46,9 @@ class SqlToolTest extends FunSpec
       val value = sqlTool.on(connectionPool)
         .query("select 'testText' as text from dual")
         .executeQuery()
-        .asSingleTyped(stringTyped)
+        .like[String]
 
       connectionPool.getActiveConnections shouldBe 0
-    }
-
-    it("can extract list of primitive results") {
-
-      val value = sqlTool.on(connectionPool)
-        .query(
-          """
-            |select 'text1' as text from dual
-            |union
-            |select 'text2' as text from dual
-          """.stripMargin
-        )
-        .executeQuery()
-        .asListOfTyped(stringTyped)
-
-      value shouldBe List("text1", "text2")
-    }
-
-    it("can extract single sql entity object") {
-
-      val person = sqlTool.on(connectionPool)
-        .query("select 'John' as name from dual")
-        .executeQuery()
-        .asSingle[SqlEntityPerson]
-
-      val johnPerson = new SqlEntityPerson()
-      johnPerson.name = "John"
-
-      person shouldBe johnPerson
-    }
-
-    it("can extract list of sql entity objects") {
-
-      val person = sqlTool.on(connectionPool)
-        .query(
-          """
-            |select 'John' as name from dual
-            |union
-            |select 'Jane' as name from dual
-          """.stripMargin
-        )
-        .executeQuery()
-        .asListOf[SqlEntityPerson]
-
-      val johnPerson = new SqlEntityPerson()
-      johnPerson.name = "John"
-      val janePerson = new SqlEntityPerson()
-      janePerson.name = "Jane"
-
-      person shouldBe List(johnPerson, janePerson)
     }
 
     it("can execute simple DDL") {
@@ -148,7 +97,7 @@ class SqlToolTest extends FunSpec
         .query("select <<param>> from dual")
         .params("param" -> "test")
         .executeQuery()
-        .asSingleTyped(stringTyped)
+        .like[String]
 
       testValue shouldBe "test"
     }
@@ -168,7 +117,7 @@ class SqlToolTest extends FunSpec
         .query("select text from book where name = <<name>>")
         .params("name" -> "War and Peace")
         .executeQuery()
-        .asSingleTyped(stringTyped)
+        .like[String]
 
       bookText shouldBe "Some text."
     }

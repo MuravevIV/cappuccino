@@ -2,12 +2,9 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import javax.sql.DataSource
 
-import com.google.common.cache.{CacheBuilder, CacheLoader}
 import com.ilyamur.cappuccino.sqltool.SqlTool
-import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
 import scala.collection.mutable.ArrayBuffer
-import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 
 class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow],
@@ -20,22 +17,6 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow],
 
   override def iterator: Iterator[SqlQueryRow] = queryRows.iterator
 
-  def asSingleTyped[T: TypeTag](sqlTyped: SqlTyped[T]): T = {
-    sqlTyped.getSingleFrom(queryRows)
-  }
-
-  def asListOfTyped[T: TypeTag](sqlTyped: SqlTyped[T]): List[T] = {
-    sqlTyped.getListFrom(queryRows)
-  }
-
-  def asSingle[T: TypeTag]: T = {
-    queryRows.length match {
-      case 0 => throw report()
-      case 1 => getInstanceByQueryRow(queryRows.head)
-      case _ => throw report()
-    }
-  }
-
   def like[T: TypeTag]: T = {
     queryRows.length match {
       case 0 => throw report("no rows")
@@ -46,43 +27,6 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow],
 
   def likeList[T: TypeTag]: List[T] = {
     queryRows.map(_.like[T]).toList
-  }
-
-  def asListOf[T: TypeTag]: List[T] = {
-    queryRows
-      .map { queryRow =>
-        getInstanceByQueryRow(queryRow)
-      }
-      .toList
-  }
-
-  // todo - make global (service component?)
-  val cachedConstructors = CacheBuilder.newBuilder()
-    .maximumSize(1000)
-    .build(new CacheLoader[TypeTag[_], MethodMirror]() {
-      def load(ttag: TypeTag[_]): MethodMirror = {
-        currentMirror
-          .reflectClass(ttag.tpe.typeSymbol.asClass)
-          .reflectConstructor(
-            ttag.tpe.members.filter(m =>
-              m.isMethod && m.asMethod.isConstructor
-            ).iterator.toSeq.head.asMethod
-          )
-      }
-    })
-
-  private def getInstanceByQueryRow[T: TypeTag](queryRow: SqlQueryRow): T = {
-    val ttag = typeTag[T]
-    val constructor = cachedConstructors.get(ttag)
-    val instance = constructor().asInstanceOf[T]
-
-    instance match {
-      case entity: SqlEntity[T] =>
-        entity.fillOn(queryRow)
-        entity.asInstanceOf[T]
-      case _ =>
-        throw report()
-    }
   }
 
   // todo

@@ -2,15 +2,6 @@ package com.ilyamur.cappuccino.sqltool.component
 
 class SqlUpdateResult(rowCount: Int) {
 
-
-  /*
-
-      .verifyUpdates()
-    .verifySingleUpdate()
-    .verifyUpdates(updateCount => updateCount == 1) // same as above
-
-   */
-
   def verifyUpdates(p: Int => Boolean): Unit = {
     if (!p(rowCount)) {
       // todo

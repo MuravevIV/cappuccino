@@ -36,10 +36,6 @@ class SqlQueryRow private() {
 
   def getData: Seq[Any] = data
 
-  def asTyped[T: TypeTag](sqlTyped: SqlTyped[T], column: Int): T = {
-    sqlTyped.getValue(this, column)
-  }
-
   def like[T: TypeTag]: T = {
     val ttag = typeTag[T]
     val classSymbol = ttag.tpe.typeSymbol.asClass
