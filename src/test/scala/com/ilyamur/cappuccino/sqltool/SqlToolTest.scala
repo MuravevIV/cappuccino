@@ -27,9 +27,7 @@ class SqlToolTest extends FunSpec
 
   describe("the SqlTool query functionality") {
 
-    val sqlTool = new SqlTool()
-
-    sqlTool.registerPostQueryTransformer((s: String) => s)
+    val sqlTool = SqlToolkit.getDefaultTool
 
     it("executes plain query and extracts primitive result") {
 
@@ -102,7 +100,7 @@ class SqlToolTest extends FunSpec
       testValue shouldBe "test"
     }
 
-    ignore("inserts and selects clob") {
+/*    ignore("inserts and selects clob") {
 
       sqlTool.on(connectionPool)
         .query("insert into book (name, text) values (<<name>>, <<text>>)")
@@ -120,7 +118,7 @@ class SqlToolTest extends FunSpec
         .like[String]
 
       bookText shouldBe "Some text."
-    }
+    }*/
 
     it("can extract predef class with like-extractor") {
 
@@ -170,6 +168,44 @@ class SqlToolTest extends FunSpec
         .likeList[CasePerson]
 
       persons shouldBe List(CasePerson("John"), CasePerson("Jane"))
+    }
+
+    it("performs sanity check") {
+
+      val books = List(
+        Book(1, "Hear the Wind Sing", 1979),
+        Book(2, "The catcher in the rye", 1951),
+        Book(3, "War and Peace", 1869)
+      )
+
+      val executor = sqlTool.on(connectionPool)
+
+      executor
+        .query("CREATE TABLE book(id NUMBER(8) NOT NULL, title VARCHAR2(200) NOT NULL, year NUMBER(4))")
+        .executeUpdate()
+
+      books.foreach { book =>
+        executor
+          .query("INSERT INTO book(id, title, year) VALUES (<<id>>, <<title>>, <<year>>)")
+          .params(
+            "id" -> book.id,
+            "title" -> book.title,
+            "year" -> book.year
+          )
+          .executeUpdate()
+          .verifyUpdates()
+      }
+
+      val modernBooks = executor
+        .query("SELECT id, title, year FROM book WHERE year > <<year>> ORDER BY year")
+        .params("year" -> 1900)
+        .executeQuery()
+        .likeList[Book]
+
+      modernBooks shouldBe List(
+        Book(2, "The catcher in the rye", 1951),
+        Book(1, "Hear the Wind Sing", 1979)
+      )
     }
   }
 }

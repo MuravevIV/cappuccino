@@ -3,7 +3,6 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.ResultSet
 
 import com.ilyamur.cappuccino.sqltool.SqlTool
-import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
@@ -54,10 +53,14 @@ class SqlQueryRow private() {
   }
 
   private def likeCaseClass[T](ttag: TypeTag[T], classSymbol: ClassSymbol): T = {
+
+    val constructors = classSymbol.toType.members
+      .collect { case m: MethodSymbol if m.isConstructor && m.isPublic => m }
+
+    val constructorArgNames = constructors.head.paramLists.flatMap(_.map(_.name.toString.toLowerCase))
+
     val accessors = classSymbol.toType.members
-      .collect {
-        case m: MethodSymbol if m.isGetter && m.isPublic => m
-      }
+      .collect { case m: MethodSymbol if m.isGetter && m.isPublic => m }
       .map { accessor =>
         (accessor.name.toString.toLowerCase, accessor.info.resultType)
       }
@@ -69,9 +72,14 @@ class SqlQueryRow private() {
       ).iterator.toSeq.head.asMethod
     )
 
-    val args = accessors.map { case (fieldName, trgFieldType) =>
-      likeNonCaseClass[Any](trgFieldType.typeSymbol.asClass, fieldName)
-    }.toList
+    val args = constructorArgNames.map { fieldName =>
+      accessors.get(fieldName) match {
+        case Some(trgFieldType) =>
+          likeNonCaseClass[Any](trgFieldType.typeSymbol.asClass, fieldName)
+        case _ =>
+          report(s"Can not find accessor for consctructor argument '${fieldName}'")
+      }
+    }
 
     constructor.apply(args: _*).asInstanceOf[T]
   }
@@ -97,17 +105,18 @@ class SqlQueryRow private() {
   }
 
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: universe.ClassSymbol, columnIdx: Int) = {
-    val srcClassSymbol = currentMirror.classSymbol(data.head.getClass)
+    val dataValue = data(columnIdx)
+    val srcClassSymbol = currentMirror.classSymbol(dataValue.getClass)
     sqlToolContext.postTran.get(srcClassSymbol) match {
       case Some(trgMap) =>
         trgMap.get(trgClassSymbol) match {
           case Some(t) =>
-            t.asInstanceOf[(Any => T)].apply(data(columnIdx))
+            t.asInstanceOf[(Any => T)].apply(dataValue)
           case _ =>
-            throw report(s"no mapping found for target type '${trgClassSymbol}'")
+            throw report(s"no mapping found for transformation from '${srcClassSymbol}' to '${trgClassSymbol}'")
         }
       case _ =>
-        throw report(s"no mapping found for source type '${trgClassSymbol}'")
+        throw report(s"no mapping found for transformation from '${srcClassSymbol}'")
     }
   }
 

@@ -64,7 +64,7 @@ case class SqlQuery(queryString: String,
     preparedStatement
   }
 
-  def params(pair: (String, String), pairs: (String, String)*): SqlQuery = {
+  def params(pair: (String, Any), pairs: (String, Any)*): SqlQuery = {
     (pair :: pairs.toList).foldLeft(this) { (query, p) =>
       query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
     }

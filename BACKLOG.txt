@@ -17,7 +17,7 @@ version 0.2
     extractors
         list extractor
         object extractor
-            DTO class definition
+            case-class definition
 
     all typed values
 

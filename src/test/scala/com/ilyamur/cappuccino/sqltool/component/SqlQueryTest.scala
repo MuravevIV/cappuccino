@@ -3,7 +3,6 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.{Connection, PreparedStatement, ResultSet}
 import javax.sql.DataSource
 
-import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}

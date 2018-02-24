@@ -1,7 +1,6 @@
 package com.ilyamur.cappuccino.sqltool
 
 import java.io.{File, FileReader}
-import javax.sql.DataSource
 
 import org.h2.jdbcx.JdbcConnectionPool
 import org.h2.tools.RunScript

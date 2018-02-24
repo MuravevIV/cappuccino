@@ -5,7 +5,7 @@ class SqlUpdateResult(rowCount: Int) {
   def verifyUpdates(p: Int => Boolean): Unit = {
     if (!p(rowCount)) {
       // todo
-      throw new IllegalStateException()
+      throw new IllegalStateException("Update verification failed")
     }
   }
 
