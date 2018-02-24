@@ -3,7 +3,7 @@ package com.ilyamur.cappuccino.sqltool
 import com.ilyamur.cappuccino.sqltool.SqlTypes.stringTyped
 import com.ilyamur.cappuccino.sqltool.component.{SqlEntity, SqlQueryRow}
 
-class Person() extends SqlEntity[Person] {
+class SqlEntityPerson() extends SqlEntity[SqlEntityPerson] {
 
   var name: String = _
 
@@ -11,10 +11,10 @@ class Person() extends SqlEntity[Person] {
     this.name = queryRow.asTyped(stringTyped, 1)
   }
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[Person]
+  def canEqual(other: Any): Boolean = other.isInstanceOf[SqlEntityPerson]
 
   override def equals(other: Any): Boolean = other match {
-    case that: Person =>
+    case that: SqlEntityPerson =>
       (that canEqual this) &&
         name == that.name
     case _ => false

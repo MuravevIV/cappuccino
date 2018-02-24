@@ -1,16 +1,17 @@
 package com.ilyamur.cappuccino.sqltool.component
 
-import java.sql.{Connection, PreparedStatement}
+import java.sql.Connection
 import javax.sql.DataSource
 
+import com.ilyamur.cappuccino.sqltool.SqlTool
 import com.ilyamur.cappuccino.sqltool.parser.SqlQueryTehnologiaParser
 
 import scala.collection.mutable.ArrayBuffer
 
 case class SqlQuery(queryString: String,
                     dataSource: DataSource,
-                    queryParameters: List[SqlQueryParameter] = List.empty,
-                    transformers: List[_] = List.empty) {
+                    sqlToolCtx: SqlTool.Context = SqlTool.Context(),
+                    queryParameters: List[SqlQueryParameter] = List.empty) {
 
   private val parser = new SqlQueryTehnologiaParser()
 
@@ -21,10 +22,10 @@ case class SqlQuery(queryString: String,
       val resultSet = preparedStatement.executeQuery()
       val queryRows: ArrayBuffer[SqlQueryRow] = new ArrayBuffer[SqlQueryRow]()
       while (resultSet.next()) {
-        val queryRow = SqlQueryRow.from(resultSet, transformers)
+        val queryRow = SqlQueryRow.from(resultSet, sqlToolCtx)
         queryRows.append(queryRow)
       }
-      new SqlQueryResult(queryRows, dataSource)
+      new SqlQueryResult(queryRows, dataSource, sqlToolCtx)
     } finally {
       connection.close()
     }
@@ -67,10 +68,6 @@ case class SqlQuery(queryString: String,
     (pair :: pairs.toList).foldLeft(this) { (query, p) =>
       query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
     }
-  }
-
-  def withTransformer[A, B](transformer: (A => B)) = {
-    copy(transformers = transformers :+ transformer)
   }
 
   private def report(): Exception = ???

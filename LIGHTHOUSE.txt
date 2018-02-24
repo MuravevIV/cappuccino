@@ -155,6 +155,20 @@ custom sql types transformers
         .executeQuery()
         .asSingleTyped(stringTyped)
 
+general conversion
+
+    row-based
+
+        .like[String]                 // for single-column result
+        .like[String]("name")         // for "name" column result
+        .like[Person]                 // case classes filled based on properties
+
+    set-based
+
+        .like[String]                 // for single-row and single-column result
+        .like[Person]                 // for single-row result
+        .likeList[String]             // for single-column result
+        .likeList[Person]             // full result
 
 
 

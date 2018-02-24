@@ -2,6 +2,7 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import java.sql.{ResultSet, ResultSetMetaData}
 
+import com.ilyamur.cappuccino.sqltool.SqlTool
 import com.ilyamur.cappuccino.sqltool.SqlTypes._
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -29,7 +30,7 @@ class SqlQueryRowTest extends FunSpec
       when(resultSet.getObject(8)).thenReturn('a'.asInstanceOf[Object], null)
       when(resultSet.getObject(9)).thenReturn("abc".asInstanceOf[Object], null)
 
-      val queryRow = SqlQueryRow.from(resultSet)
+      val queryRow = SqlQueryRow.from(resultSet, SqlTool.Context())
 
       val booleanValue: Boolean = queryRow.asTyped(booleanTyped, 1)
       val byteValue: Short = queryRow.asTyped(byteTyped, 2)

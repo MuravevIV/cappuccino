@@ -3,13 +3,16 @@ package com.ilyamur.cappuccino.sqltool.component
 import javax.sql.DataSource
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
+import com.ilyamur.cappuccino.sqltool.SqlTool
 import com.ilyamur.cappuccino.sqltool.typed.SqlTyped
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 
-class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource) extends Seq[SqlQueryRow] {
+class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow],
+                     dataSource: DataSource,
+                     sqlToolCtx: SqlTool.Context = SqlTool.Context()) extends Seq[SqlQueryRow] {
 
   override def length: Int = queryRows.length
 
@@ -30,6 +33,14 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
       case 0 => throw report()
       case 1 => getInstanceByQueryRow(queryRows.head)
       case _ => throw report()
+    }
+  }
+
+  def like[T: TypeTag]: T = {
+    queryRows.length match {
+      case 0 => throw report("no rows")
+      case 1 => queryRows.head.like[T]
+      case _ => throw report("too many rows")
     }
   }
 
@@ -71,5 +82,5 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow], dataSource: DataSource
   }
 
   // todo
-  private def report(): Exception = ???
+  private def report(message: String = "<no message>"): Exception = throw new IllegalStateException(message)
 }

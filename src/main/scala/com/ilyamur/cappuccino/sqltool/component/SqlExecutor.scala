@@ -2,9 +2,11 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import javax.sql.DataSource
 
-class SqlExecutor(dataSource: DataSource) {
+import com.ilyamur.cappuccino.sqltool.SqlTool
+
+class SqlExecutor(dataSource: DataSource, ctx: SqlTool.Context) {
 
   def query(queryString: String): SqlQuery = {
-    new SqlQuery(queryString, dataSource)
+    SqlQuery(queryString, dataSource, ctx)
   }
 }

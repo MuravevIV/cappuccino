@@ -71,9 +71,9 @@ class SqlToolTest extends FunSpec
       val person = sqlTool.on(connectionPool)
         .query("select 'John' as name from dual")
         .executeQuery()
-        .asSingle[Person]
+        .asSingle[SqlEntityPerson]
 
-      val johnPerson = new Person()
+      val johnPerson = new SqlEntityPerson()
       johnPerson.name = "John"
 
       person shouldBe johnPerson
@@ -90,11 +90,11 @@ class SqlToolTest extends FunSpec
           """.stripMargin
         )
         .executeQuery()
-        .asListOf[Person]
+        .asListOf[SqlEntityPerson]
 
-      val johnPerson = new Person()
+      val johnPerson = new SqlEntityPerson()
       johnPerson.name = "John"
-      val janePerson = new Person()
+      val janePerson = new SqlEntityPerson()
       janePerson.name = "Jane"
 
       person shouldBe List(johnPerson, janePerson)
@@ -159,7 +159,7 @@ class SqlToolTest extends FunSpec
           "name" -> "War and Peace",
           "text" -> "Some text."
         )
-        .withTransformer(H2ClobToStringTransformer)
+        // .withTransformer(H2ClobToStringTransformer)
         .executeUpdate()
 
       val bookText = sqlTool.on(connectionPool)
@@ -169,6 +169,28 @@ class SqlToolTest extends FunSpec
         .asSingleTyped(stringTyped)
 
       bookText shouldBe "Some text."
+    }
+
+    it("can extract predef class with like-extractor") {
+
+      sqlTool.registerPostQueryTransformer((s: String) => s)
+
+      val name = sqlTool.on(connectionPool)
+        .query("select 'John' as name from dual")
+        .executeQuery()
+        .like[String]
+
+      name shouldBe "John"
+    }
+
+    ignore("can extract case class with like-extractor") {
+
+      val person = sqlTool.on(connectionPool)
+        .query("select 'John' as name from dual")
+        .executeQuery()
+        .like[CasePerson]
+
+      person shouldBe CasePerson("John")
     }
   }
 }
