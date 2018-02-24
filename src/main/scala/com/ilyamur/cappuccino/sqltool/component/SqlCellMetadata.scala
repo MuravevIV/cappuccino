@@ -6,10 +6,9 @@ object SqlCellMetadata {
 
   def from(resultSetMetaData: ResultSetMetaData, column: Int): SqlCellMetadata = {
     val columnType = resultSetMetaData.getColumnType(column)
-    new SqlCellMetadata(columnType)
+    val columnName = Option.apply(resultSetMetaData.getColumnName(column)).map(_.toLowerCase()).orNull
+    new SqlCellMetadata(columnType, columnName)
   }
 }
 
-class SqlCellMetadata private(columnType: Int) {
-
-}
+case class SqlCellMetadata(columnType: Int, columnName: String)

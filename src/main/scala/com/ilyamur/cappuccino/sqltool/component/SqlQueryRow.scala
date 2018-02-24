@@ -43,23 +43,38 @@ class SqlQueryRow private() {
     val classSymbol = ttag.tpe.typeSymbol.asClass
     val isCaseClass = classSymbol.isCaseClass
     if (isCaseClass) {
-      likeCaseClass[T](classSymbol)
+      likeCaseClass[T](ttag, classSymbol)
     } else {
       likePredefClass[T](classSymbol)
     }
   }
 
-  private def likeCaseClass[T](classSymbol: ClassSymbol): T = {
+  private def likeCaseClass[T](ttag: TypeTag[T], classSymbol: ClassSymbol): T = {
     val accessors = classSymbol.toType.members
       .collect {
         case m: MethodSymbol if m.isGetter && m.isPublic => m
       }
       .map { accessor =>
-        (accessor.name.toString, accessor.info.resultType)
+        (accessor.name.toString.toLowerCase, accessor.info.resultType)
       }
       .toMap
 
-    ???
+    val constructor = currentMirror.reflectClass(classSymbol).reflectConstructor(
+      ttag.tpe.members.filter(m =>
+        m.isMethod && m.asMethod.isConstructor
+      ).iterator.toSeq.head.asMethod
+    )
+
+    val columnNameMap = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.zipWithIndex.toMap
+
+    val args = accessors.map { case (fieldName, _) =>
+      columnNameMap.get(fieldName) match {
+        case Some(columnIdx) => data(columnIdx)
+        case None => report(s"Can not find column named '${fieldName}'")
+      }
+    }.toList
+
+    constructor.apply(args: _*).asInstanceOf[T]
   }
 
   private def likePredefClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {

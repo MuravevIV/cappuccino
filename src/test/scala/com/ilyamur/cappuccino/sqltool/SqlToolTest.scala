@@ -183,7 +183,7 @@ class SqlToolTest extends FunSpec
       name shouldBe "John"
     }
 
-    ignore("can extract case class with like-extractor") {
+    it("can extract case class with like-extractor") {
 
       val person = sqlTool.on(connectionPool)
         .query("select 'John' as name from dual")
