@@ -44,6 +44,10 @@ class SqlQueryResult(queryRows: ArrayBuffer[SqlQueryRow],
     }
   }
 
+  def likeList[T: TypeTag]: List[T] = {
+    queryRows.map(_.like[T]).toList
+  }
+
   def asListOf[T: TypeTag]: List[T] = {
     queryRows
       .map { queryRow =>

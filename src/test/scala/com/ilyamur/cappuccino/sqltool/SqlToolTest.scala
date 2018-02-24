@@ -192,6 +192,36 @@ class SqlToolTest extends FunSpec
 
       person shouldBe CasePerson("John")
     }
+
+    it("can extract list of predef classes with likeList-extractor") {
+
+      val persons = sqlTool.on(connectionPool)
+        .query(
+          """
+            |select 'John' as name from dual
+            |union
+            |select 'Jane' as name from dual
+          """.stripMargin)
+        .executeQuery()
+        .likeList[String]
+
+      persons shouldBe List("John", "Jane")
+    }
+
+    it("can extract list of case classes with likeList-extractor") {
+
+      val persons = sqlTool.on(connectionPool)
+        .query(
+          """
+            |select 'John' as name from dual
+            |union
+            |select 'Jane' as name from dual
+          """.stripMargin)
+        .executeQuery()
+        .likeList[CasePerson]
+
+      persons shouldBe List(CasePerson("John"), CasePerson("Jane"))
+    }
   }
 }
 
