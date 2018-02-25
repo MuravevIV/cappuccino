@@ -197,7 +197,7 @@ class SqlToolTest extends FunSpec
       }
 
       val modernBooks = executor
-        .query("SELECT id, title, year FROM book WHERE year > <<year>> ORDER BY year")
+        .query("SELECT year, title, id FROM book WHERE year > <<year>> ORDER BY year")
         .params("year" -> 1900)
         .executeQuery()
         .likeList[Book]

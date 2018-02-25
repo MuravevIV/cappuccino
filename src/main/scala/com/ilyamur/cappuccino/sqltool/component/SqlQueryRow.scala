@@ -43,7 +43,7 @@ class SqlQueryRow private() {
     val classSymbol = ttag.tpe.typeSymbol.asClass
     val isCaseClass = classSymbol.isCaseClass
     if (isCaseClass) {
-      likeCaseClass[T](ttag, classSymbol)
+      likeCaseClass[T](ttag)
     } else {
       likeNonCaseClass[T](classSymbol)
     }
@@ -55,9 +55,9 @@ class SqlQueryRow private() {
     likeNonCaseClass(classSymbol, columnName)
   }
 
-  private def likeCaseClass[T](ttag: TypeTag[T], classSymbol: ClassSymbol): T = {
+  private def likeCaseClass[T](ttag: TypeTag[T]): T = {
 
-    val ccd = sqlRuntimeMirror.createCaseClassData(ttag, classSymbol)
+    val ccd = sqlRuntimeMirror.createCaseClassData(ttag)
 
     val args = getArguments(ccd)
 

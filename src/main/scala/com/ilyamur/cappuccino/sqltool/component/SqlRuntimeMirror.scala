@@ -2,39 +2,24 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 
-import scala.reflect.api
-import scala.reflect.api.{TypeCreator, Universe}
-import scala.reflect.runtime.{universe, _}
+import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 
 class SqlRuntimeMirror {
 
   private val cache = CacheBuilder.newBuilder()
-    .build(new CacheLoader[ClassSymbol, CaseClassData]() {
-      override def load(classSymbol: ClassSymbol): CaseClassData = {
-        val ttag = toTypeTag(classSymbol.selfType)
-        internalCreateCaseClassData(ttag, classSymbol)
+    .build(new CacheLoader[TypeTag[_], CaseClassData]() {
+      override def load(ttag: TypeTag[_]): CaseClassData = {
+        internalCreateCaseClassData(ttag)
       }
     })
 
-  private def toTypeTag(tpe: Type) = {
-    val ttag = TypeTag(currentMirror, new TypeCreator {
-      def apply[U <: Universe with Singleton](m: api.Mirror[U]) =
-        if (m eq currentMirror) {
-          tpe.asInstanceOf[U#Type]
-        } else {
-          throw new IllegalArgumentException(s"Type tag defined in $currentMirror cannot be migrated to other mirrors.")
-        }
-    })
-    ttag
+  def createCaseClassData[T](ttag: TypeTag[T]) = {
+    cache.get(ttag)
   }
 
-  def createCaseClassData[T](ttag: TypeTag[T], classSymbol: ClassSymbol) = {
-    cache.get(classSymbol)
-    // internalCreateCaseClassData(ttag, classSymbol)
-  }
-
-  private def internalCreateCaseClassData[T](ttag: TypeTag[T], classSymbol: ClassSymbol) = {
+  private def internalCreateCaseClassData[T](ttag: TypeTag[T]) = {
+    val classSymbol = ttag.tpe.typeSymbol.asClass
     CaseClassData(
       constructorArgNames = getConstructorArgNames(classSymbol),
       fieldsDict = getFieldsDict(classSymbol),
