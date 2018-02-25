@@ -26,11 +26,17 @@ version 0.2
 
     select parametrization
 
+    entity constructors caching (Guava)
+
+    parametrized query caching
+
 version 0.3
 
     LOB issues resolving
 
     query sourcing
+
+    batch updates
 
     multi-database-based usage (select)
 
@@ -43,7 +49,3 @@ version 1
     transactional usage
 
 other
-
-    entity constructors caching (Guava)
-    parametrized query caching
-    batch updates

@@ -100,26 +100,6 @@ class SqlToolTest extends FunSpec
       testValue shouldBe "test"
     }
 
-/*    ignore("inserts and selects clob") {
-
-      sqlTool.on(connectionPool)
-        .query("insert into book (name, text) values (<<name>>, <<text>>)")
-        .params(
-          "name" -> "War and Peace",
-          "text" -> "Some text."
-        )
-        // .withTransformer(H2ClobToStringTransformer)
-        .executeUpdate()
-
-      val bookText = sqlTool.on(connectionPool)
-        .query("select text from book where name = <<name>>")
-        .params("name" -> "War and Peace")
-        .executeQuery()
-        .like[String]
-
-      bookText shouldBe "Some text."
-    }*/
-
     it("can extract predef class with like-extractor") {
 
       val name = sqlTool.on(connectionPool)
@@ -169,6 +149,26 @@ class SqlToolTest extends FunSpec
 
       persons shouldBe List(CasePerson("John"), CasePerson("Jane"))
     }
+
+    /*    ignore("inserts and selects clob") {
+
+      sqlTool.on(connectionPool)
+        .query("insert into book (name, text) values (<<name>>, <<text>>)")
+        .params(
+          "name" -> "War and Peace",
+          "text" -> "Some text."
+        )
+        // .withTransformer(H2ClobToStringTransformer)
+        .executeUpdate()
+
+      val bookText = sqlTool.on(connectionPool)
+        .query("select text from book where name = <<name>>")
+        .params("name" -> "War and Peace")
+        .executeQuery()
+        .like[String]
+
+      bookText shouldBe "Some text."
+    }*/
 
     it("performs sanity check") {
 
