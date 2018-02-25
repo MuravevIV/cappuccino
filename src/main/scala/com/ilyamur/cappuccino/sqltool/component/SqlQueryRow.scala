@@ -35,6 +35,9 @@ class SqlQueryRow private() {
 
   def getData: Seq[Any] = data
 
+  // todo lift up
+  private val sqlRuntimeMirror = new SqlRuntimeMirror()
+
   def like[T: TypeTag]: T = {
     val ttag = typeTag[T]
     val classSymbol = ttag.tpe.typeSymbol.asClass
@@ -54,34 +57,22 @@ class SqlQueryRow private() {
 
   private def likeCaseClass[T](ttag: TypeTag[T], classSymbol: ClassSymbol): T = {
 
-    val constructors = classSymbol.toType.members
-      .collect { case m: MethodSymbol if m.isConstructor && m.isPublic => m }
+    val ccd = sqlRuntimeMirror.createCaseClassData(ttag, classSymbol)
 
-    val constructorArgNames = constructors.head.paramLists.flatMap(_.map(_.name.toString.toLowerCase))
+    val args = getArguments(ccd)
 
-    val accessors = classSymbol.toType.members
-      .collect { case m: MethodSymbol if m.isGetter && m.isPublic => m }
-      .map { accessor =>
-        (accessor.name.toString.toLowerCase, accessor.info.resultType)
-      }
-      .toMap
+    ccd.runtimeConstructor.apply(args: _*).asInstanceOf[T]
+  }
 
-    val constructor = currentMirror.reflectClass(classSymbol).reflectConstructor(
-      ttag.tpe.members.filter(m =>
-        m.isMethod && m.asMethod.isConstructor
-      ).iterator.toSeq.head.asMethod
-    )
-
-    val args = constructorArgNames.map { fieldName =>
-      accessors.get(fieldName) match {
-        case Some(trgFieldType) =>
-          likeNonCaseClass[Any](trgFieldType.typeSymbol.asClass, fieldName)
+  private def getArguments[T](ccd: CaseClassData): List[Any] = {
+    ccd.constructorArgNames.map { fieldName =>
+      ccd.fieldsDict.get(fieldName) match {
+        case Some(trgClassSymbol) =>
+          likeNonCaseClass[Any](trgClassSymbol, fieldName)
         case _ =>
           report(s"Can not find accessor for consctructor argument '${fieldName}'")
       }
     }
-
-    constructor.apply(args: _*).asInstanceOf[T]
   }
 
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {
@@ -104,7 +95,7 @@ class SqlQueryRow private() {
     }
   }
 
-  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: universe.ClassSymbol, columnIdx: Int) = {
+  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnIdx: Int) = {
     val dataValue = data(columnIdx)
     val srcClassSymbol = currentMirror.classSymbol(dataValue.getClass)
     sqlToolContext.postTran.get(srcClassSymbol) match {
