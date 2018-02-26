@@ -22,7 +22,7 @@ case class SqlQuery(queryString: String,
       val resultSet = preparedStatement.executeQuery()
       val queryRows: ArrayBuffer[SqlQueryRow] = new ArrayBuffer[SqlQueryRow]()
       while (resultSet.next()) {
-        val queryRow = SqlQueryRow.from(resultSet, sqlToolCtx)
+        val queryRow = new SqlQueryRow(resultSet, sqlToolCtx)
         queryRows.append(queryRow)
       }
       new SqlQueryResult(queryRows, dataSource, sqlToolCtx)
@@ -66,7 +66,7 @@ case class SqlQuery(queryString: String,
 
   def params(pair: (String, Any), pairs: (String, Any)*): SqlQuery = {
     (pair :: pairs.toList).foldLeft(this) { (query, p) =>
-      query.copy(queryParameters = query.queryParameters :+ SqlQueryParameter.from(p))
+      query.copy(queryParameters = query.queryParameters :+ (new SqlQueryParameter(p)))
     }
   }
 

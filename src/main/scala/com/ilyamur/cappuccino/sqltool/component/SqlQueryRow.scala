@@ -7,21 +7,18 @@ import com.ilyamur.cappuccino.sqltool.SqlTool
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 
-object SqlQueryRow {
+class SqlQueryRow private() {
 
-  def from(resultSet: ResultSet, sqlToolContext: SqlTool.Context): SqlQueryRow = {
-    val queryRow = new SqlQueryRow()
-    queryRow.queryMetadata = SqlQueryMetadata.from(resultSet.getMetaData)
+  def this(resultSet: ResultSet, sqlToolContext: SqlTool.Context) = {
+    this()
+    this.queryMetadata = new SqlQueryMetadata(resultSet.getMetaData)
     val columnCount = resultSet.getMetaData.getColumnCount
-    queryRow.data = (1 to columnCount).map { columnIndex =>
+    this.data = (1 to columnCount).map { columnIndex =>
       resultSet.getObject(columnIndex)
     }
-    queryRow.sqlToolContext = sqlToolContext
-    queryRow
+    this.sqlToolContext = sqlToolContext
+    this.sqlRuntimeMirror = new SqlRuntimeMirror()
   }
-}
-
-class SqlQueryRow private() {
 
   private var queryMetadata: SqlQueryMetadata = _
 
@@ -29,14 +26,13 @@ class SqlQueryRow private() {
 
   private var sqlToolContext: SqlTool.Context = SqlTool.Context()
 
+  private var sqlRuntimeMirror: SqlRuntimeMirror = _
+
   def getMetaData: SqlQueryMetadata = queryMetadata
 
   lazy val columnNameMap = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.zipWithIndex.toMap
 
   def getData: Seq[Any] = data
-
-  // todo lift up
-  private val sqlRuntimeMirror = new SqlRuntimeMirror()
 
   def like[T: TypeTag]: T = {
     val ttag = typeTag[T]

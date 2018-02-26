@@ -29,7 +29,7 @@ class SqlQueryRowTest extends FunSpec
       when(resultSet.getObject(8)).thenReturn('a'.asInstanceOf[Object], null)
       when(resultSet.getObject(9)).thenReturn("abc".asInstanceOf[Object], null)
 
-      val queryRow = SqlQueryRow.from(resultSet, SqlTool.Context())
+      val queryRow = new SqlQueryRow(resultSet, SqlTool.Context())
 
       // todo
       /*

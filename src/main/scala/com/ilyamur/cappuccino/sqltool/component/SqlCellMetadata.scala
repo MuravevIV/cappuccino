@@ -2,13 +2,12 @@ package com.ilyamur.cappuccino.sqltool.component
 
 import java.sql.ResultSetMetaData
 
-object SqlCellMetadata {
+case class SqlCellMetadata(columnType: Int, columnName: String) {
 
-  def from(resultSetMetaData: ResultSetMetaData, column: Int): SqlCellMetadata = {
-    val columnType = resultSetMetaData.getColumnType(column)
-    val columnName = Option.apply(resultSetMetaData.getColumnName(column)).map(_.toLowerCase()).orNull
-    new SqlCellMetadata(columnType, columnName)
+  def this(resultSetMetaData: ResultSetMetaData, column: Int) = {
+    this(
+      columnType = resultSetMetaData.getColumnType(column),
+      columnName = Option.apply(resultSetMetaData.getColumnName(column)).map(_.toLowerCase()).orNull
+    )
   }
 }
-
-case class SqlCellMetadata(columnType: Int, columnName: String)
