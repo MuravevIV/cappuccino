@@ -41,8 +41,7 @@ class SqlQueryRow private() {
   def like[T: TypeTag]: T = {
     val ttag = typeTag[T]
     val classSymbol = ttag.tpe.typeSymbol.asClass
-    val isCaseClass = classSymbol.isCaseClass
-    if (isCaseClass) {
+    if (classSymbol.isCaseClass) {
       likeCaseClass[T](ttag)
     } else {
       likeNonCaseClass[T](classSymbol)
@@ -56,11 +55,8 @@ class SqlQueryRow private() {
   }
 
   private def likeCaseClass[T](ttag: TypeTag[T]): T = {
-
     val ccd = sqlRuntimeMirror.createCaseClassData(ttag)
-
     val args = getArguments(ccd)
-
     ccd.runtimeConstructor.apply(args: _*).asInstanceOf[T]
   }
 
@@ -98,11 +94,16 @@ class SqlQueryRow private() {
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnIdx: Int) = {
     val dataValue = data(columnIdx)
     val srcClassSymbol = currentMirror.classSymbol(dataValue.getClass)
+    val function = getPostTranFunction(srcClassSymbol, trgClassSymbol)
+    function(dataValue)
+  }
+
+  private def getPostTranFunction[T: TypeTag](srcClassSymbol: ClassSymbol, trgClassSymbol: ClassSymbol): (Any => T) = {
     sqlToolContext.postTran.get(srcClassSymbol) match {
       case Some(trgMap) =>
         trgMap.get(trgClassSymbol) match {
           case Some(t) =>
-            t.asInstanceOf[(Any => T)].apply(dataValue)
+            t.asInstanceOf[(Any => T)]
           case _ =>
             throw report(s"no mapping found for transformation from '${srcClassSymbol}' to '${trgClassSymbol}'")
         }

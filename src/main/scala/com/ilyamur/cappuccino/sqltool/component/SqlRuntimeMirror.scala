@@ -20,6 +20,9 @@ class SqlRuntimeMirror {
 
   private def internalCreateCaseClassData[T](ttag: TypeTag[T]) = {
     val classSymbol = ttag.tpe.typeSymbol.asClass
+    if (!classSymbol.isCaseClass) {
+      throw report(s"Expected case class, got '${classSymbol}'")
+    }
     CaseClassData(
       constructorArgNames = getConstructorArgNames(classSymbol),
       fieldsDict = getFieldsDict(classSymbol),
@@ -50,4 +53,7 @@ class SqlRuntimeMirror {
       ).iterator.toSeq.head.asMethod
     )
   }
+
+  // todo
+  private def report(message: String = "<no message>"): Exception = throw new IllegalStateException(message)
 }
