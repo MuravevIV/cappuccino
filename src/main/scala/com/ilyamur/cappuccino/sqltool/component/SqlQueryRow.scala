@@ -3,6 +3,7 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.ResultSet
 
 import com.ilyamur.cappuccino.sqltool.SqlTool
+import com.ilyamur.cappuccino.sqltool.reflection.{CaseClassData, SqlRuntimeMirror}
 
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._

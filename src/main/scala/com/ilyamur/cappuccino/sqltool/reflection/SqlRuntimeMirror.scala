@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino.sqltool.component
+package com.ilyamur.cappuccino.sqltool.reflection
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 

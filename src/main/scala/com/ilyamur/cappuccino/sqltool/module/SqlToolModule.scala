@@ -12,4 +12,24 @@ class SqlToolModule {
   lazy val theUserFinder = wire[UserFinder]
   lazy val theDatabaseAccess = wire[DatabaseAccess]
   lazy val theSecurityFilter = wire[SecurityFilter]*/
+
+  class A()
+
+  class B(s: String, a: A)
+
+  class F extends (String => B) {
+    override def apply(s: String): B = {
+
+    }
+  }
+
+  class C(d: D) {
+    def foo(): Unit = {
+      val b = d.createB("s")
+    }
+  }
+
+  class D(a: A) {
+    def createB(s: String): B = new B(s, a)
+  }
 }
