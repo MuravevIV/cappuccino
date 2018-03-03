@@ -18,9 +18,7 @@ class SqlToolModule {
   class B(s: String, a: A)
 
   class F extends (String => B) {
-    override def apply(s: String): B = {
-
-    }
+    override def apply(s: String): B = ???
   }
 
   class C(d: D) {

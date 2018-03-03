@@ -1,0 +1,29 @@
+
+class CaseClassReflection[A] private[???](???) {
+
+    def createInstance(args: List[Any]): A = ???
+
+    def getFieldTypes:
+}
+
+class Reflection {
+
+    def forCaseClass(classSymbol: ClassSymbol, fieldsOrder: List[String]): CaseClassReflection = ???
+}
+
+val reflection = new Reflection()
+
+val classSymbol: ClassSymbol = ???
+
+val argNames: List[String] = ???
+val args: List[Any] = ???
+
+val ccr: CaseClassReflection = reflection.forCaseClass(classSymbol, argNames)
+
+val fieldTypes = ccr.getFieldTypes
+
+// (agrs, fieldTypes) => typeAdaptedArgs // todo tool?
+// TypeMappings(f*: (_ => _))
+// Map[ClassSymbol, Map[ClassSymbol, (_ => _)]]
+
+val instance = ccr.createInstance(typeAdaptedArgs)
