@@ -3,7 +3,7 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.ResultSet
 
 import com.ilyamur.cappuccino.sqltool.SqlTool
-import com.ilyamur.cappuccino.sqltool.reflection.{CaseClassData, Reflection, SqlRuntimeMirror}
+import com.ilyamur.cappuccino.sqltool.reflection.{Reflection, SqlRuntimeMirror}
 
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
@@ -49,9 +49,7 @@ class SqlQueryRow private() {
   }
 
   def like[T: TypeTag](columnName: String): T = {
-    val ttag = typeTag[T]
-    val classSymbol = ttag.tpe.typeSymbol.asClass
-    likeNonCaseClass(classSymbol, columnName)
+    likeNonCaseClass(columnName)
   }
 
   private def likeCaseClass[T: TypeTag](ttag: TypeTag[T]): T = {
@@ -59,56 +57,34 @@ class SqlQueryRow private() {
     ccr.createInstance(data)
   }
 
-  private def getArguments[T](ccd: CaseClassData): List[Any] = {
-    ccd.constructorArgNames.map { fieldName =>
-      ccd.fieldsDict.get(fieldName) match {
-        case Some(trgClassSymbol) =>
-          likeNonCaseClass[Any](trgClassSymbol, fieldName)
-        case _ =>
-          report(s"Can not find accessor for consctructor argument '${fieldName}'")
-      }
-    }
-  }
-
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {
     data.length match {
       case 0 =>
         throw report("no columns")
       case 1 =>
-        likeNonCaseClass(trgClassSymbol, 0)
+        likeNonCaseClass(0)
       case _ =>
         throw report("too many columns")
     }
   }
 
-  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnName: String): T = {
+  private def likeNonCaseClass[T: TypeTag](columnName: String): T = {
     columnNameMap.get(columnName) match {
       case Some(columnIdx) =>
-        likeNonCaseClass(trgClassSymbol, columnIdx)
+        likeNonCaseClass(columnIdx)
       case _ =>
         throw report(s"Can not find column named '${columnName}'")
     }
   }
 
-  private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol, columnIdx: Int) = {
+  private def likeNonCaseClass[T: TypeTag](columnIdx: Int) = {
     val dataValue = data(columnIdx)
     val srcClassSymbol = currentMirror.classSymbol(dataValue.getClass)
-    val function = getPostTranFunction(srcClassSymbol, trgClassSymbol)
-    function(dataValue)
-  }
 
-  private def getPostTranFunction[T: TypeTag](srcClassSymbol: ClassSymbol, trgClassSymbol: ClassSymbol): (Any => T) = {
-    sqlToolContext.postTran.get(srcClassSymbol) match {
-      case Some(trgMap) =>
-        trgMap.get(trgClassSymbol) match {
-          case Some(t) =>
-            t.asInstanceOf[(Any => T)]
-          case _ =>
-            throw report(s"no mapping found for transformation from '${srcClassSymbol}' to '${trgClassSymbol}'")
-        }
-      case _ =>
-        throw report(s"no mapping found for transformation from '${srcClassSymbol}'")
-    }
+    sqlToolContext.postTypeMappers
+      .forOutputType[T]
+      .forInputClassSymbol(srcClassSymbol)
+      .apply(dataValue)
   }
 
   // todo

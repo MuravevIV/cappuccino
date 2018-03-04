@@ -17,9 +17,13 @@ class MultiFunction[OUT](multiFuncMap: Map[ClassSymbol, (_ => _)] = Map.empty) {
 
   def mApply[IN: TypeTag](arg: IN): OUT = {
     val inSymbol = reflection.getClassSymbol[IN]
+    forInputClassSymbol(inSymbol).apply(arg)
+  }
+
+  def forInputClassSymbol(inSymbol: ClassSymbol): (Any => OUT) = {
     multiFuncMap.get(inSymbol) match {
       case Some(func) =>
-        func.asInstanceOf[(IN => OUT)].apply(arg)
+        func.asInstanceOf[(Any => OUT)]
       case _ =>
         throw new IllegalStateException(s"Can not find function for input type '${inSymbol}'")
     }
