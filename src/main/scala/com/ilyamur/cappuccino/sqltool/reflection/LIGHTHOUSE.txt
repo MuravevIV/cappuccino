@@ -1,7 +1,7 @@
 
 class CaseClassReflection[A] private[???](???) {
 
-    def createInstance(args: List[Any]): A = ???
+    def createInstance(args: Seq[Any]): A = ???
 
     def getFieldTypes:
 }

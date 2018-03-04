@@ -18,7 +18,7 @@ class Reflection {
     typeOf[A].typeSymbol.asClass
   }
 
-  def forCaseClass[A: TypeTag](fieldsOrder: List[String]): CaseClassReflection[_] = {
+  def forCaseClass[A: TypeTag](fieldsOrder: List[String]): CaseClassReflection[A] = {
     val classSymbol = getClassSymbol
     val fields = getFieldsDict(classSymbol)
     new CaseClassReflection(fields, fieldsOrder, classSymbol, this)

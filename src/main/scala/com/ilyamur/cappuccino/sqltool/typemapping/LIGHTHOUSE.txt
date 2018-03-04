@@ -1,0 +1,7 @@
+val a: Int = 10
+
+var typeMappers = new TypeMappers()
+typeMappers = typeMappers.register((a: Int) => a.toString)
+
+val func = typeMappers.forOutputType[String]
+assert func(a) == a.toString

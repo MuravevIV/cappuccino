@@ -7,15 +7,16 @@ class CaseClassReflection[A] private[reflection](fields: Map[String, ClassSymbol
                                                  classSymbol: ClassSymbol,
                                                  reflection: Reflection) {
 
-  private val reorderlist = {
+  private val reorderList = {
+
     val argNames = reflection.getConstructorArgNames(classSymbol)
     val idxMap = argNames.zipWithIndex.toMap
-    //
+
     val validationSet = fieldsOrder.toSet.intersect(argNames.toSet)
     if ((argNames.size != fieldsOrder.size) || (argNames.size != validationSet.size)) {
       throw new IllegalArgumentException(s"Wrong reodering of fields: expected ${argNames}, got ${fieldsOrder}")
     }
-    //
+
     fieldsOrder.map { argName =>
       idxMap.get(argName) match {
         case Some(idx) =>
@@ -26,15 +27,15 @@ class CaseClassReflection[A] private[reflection](fields: Map[String, ClassSymbol
     }
   }
 
-  def createInstance(args: List[Any]): A = {
+  def createInstance(args: Seq[Any]): A = {
     val constructorMirror = reflection.getConstructor(classSymbol)
     val reorderedArgs = reodredArgs(args)
     constructorMirror.apply(reorderedArgs: _*).asInstanceOf[A]
   }
 
-  private def reodredArgs(args: List[Any]): List[Any] = {
+  private def reodredArgs(args: Seq[Any]): Seq[Any] = {
     val buff = new Array[Any](args.length)
-    reorderlist.zip(args).foreach { case (idx, arg) =>
+    reorderList.zip(args).foreach { case (idx, arg) =>
       buff(idx) = arg
     }
     buff.toList

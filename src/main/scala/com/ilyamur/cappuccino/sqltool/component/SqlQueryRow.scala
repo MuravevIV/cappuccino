@@ -3,7 +3,7 @@ package com.ilyamur.cappuccino.sqltool.component
 import java.sql.ResultSet
 
 import com.ilyamur.cappuccino.sqltool.SqlTool
-import com.ilyamur.cappuccino.sqltool.reflection.{CaseClassData, SqlRuntimeMirror}
+import com.ilyamur.cappuccino.sqltool.reflection.{CaseClassData, Reflection, SqlRuntimeMirror}
 
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
@@ -29,9 +29,12 @@ class SqlQueryRow private() {
 
   private var sqlRuntimeMirror: SqlRuntimeMirror = _
 
+  private var reflection = new Reflection()
+
   def getMetaData: SqlQueryMetadata = queryMetadata
 
-  lazy val columnNameMap = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.zipWithIndex.toMap
+  lazy val columnNameList = queryMetadata.map { case SqlCellMetadata(_, columnName) => columnName }.toList
+  lazy val columnNameMap = columnNameList.zipWithIndex.toMap
 
   def getData: Seq[Any] = data
 
@@ -51,10 +54,9 @@ class SqlQueryRow private() {
     likeNonCaseClass(classSymbol, columnName)
   }
 
-  private def likeCaseClass[T](ttag: TypeTag[T]): T = {
-    val ccd = sqlRuntimeMirror.createCaseClassData(ttag)
-    val args = getArguments(ccd)
-    ccd.runtimeConstructor.apply(args: _*).asInstanceOf[T]
+  private def likeCaseClass[T: TypeTag](ttag: TypeTag[T]): T = {
+    val ccr = reflection.forCaseClass[T](columnNameList)
+    ccr.createInstance(data)
   }
 
   private def getArguments[T](ccd: CaseClassData): List[Any] = {
