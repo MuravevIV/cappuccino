@@ -1,5 +1,6 @@
 package com.ilyamur.cappuccino.sqltool.reflection
 
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 class CaseClassReflection[A] private[reflection](fields: Map[String, ClassSymbol],
@@ -31,6 +32,10 @@ class CaseClassReflection[A] private[reflection](fields: Map[String, ClassSymbol
     val constructorMirror = reflection.getConstructor(classSymbol)
     val reorderedArgs = reodredArgs(args)
     constructorMirror.apply(reorderedArgs: _*).asInstanceOf[A]
+  }
+
+  def getFields: Map[String, ClassSymbol] = {
+    fields
   }
 
   private def reodredArgs(args: Seq[Any]): Seq[Any] = {

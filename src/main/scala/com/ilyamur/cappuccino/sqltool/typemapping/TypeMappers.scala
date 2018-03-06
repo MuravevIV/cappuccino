@@ -2,6 +2,7 @@ package com.ilyamur.cappuccino.sqltool.typemapping
 
 import com.ilyamur.cappuccino.sqltool.reflection.Reflection
 
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 class TypeMappers(mFunctionMap: Map[ClassSymbol, MultiFunction[_]] = Map.empty) {
@@ -21,6 +22,10 @@ class TypeMappers(mFunctionMap: Map[ClassSymbol, MultiFunction[_]] = Map.empty) 
 
   def forOutputType[OUT: TypeTag]: MultiFunction[OUT] = {
     val outSymbol = reflection.getClassSymbol[OUT]
+    forOutputClassSymbol(outSymbol)
+  }
+
+  def forOutputClassSymbol[OUT](outSymbol: ClassSymbol) = {
     mFunctionMap.get(outSymbol) match {
       case Some(m) =>
         m.asInstanceOf[MultiFunction[OUT]]

@@ -54,7 +54,23 @@ class SqlQueryRow private() {
 
   private def likeCaseClass[T: TypeTag](ttag: TypeTag[T]): T = {
     val ccr = reflection.forCaseClass[T](columnNameList)
-    ccr.createInstance(data)
+
+    val args: Map[String, ClassSymbol] = ccr.getFields
+
+    val updData = data.zip(columnNameList).map { case (elem, name) =>
+      args.get(name) match {
+        case Some(outSymbol) =>
+          val inSymbol = reflection.getClassSymbol(elem.getClass)
+          sqlToolContext.postTypeMappers
+            .forOutputClassSymbol[Any](outSymbol)
+            .forInputClassSymbol(inSymbol)
+            .apply(elem)
+        case _ =>
+          throw new IllegalStateException() // todo
+      }
+    }
+
+    ccr.createInstance(updData)
   }
 
   private def likeNonCaseClass[T: TypeTag](trgClassSymbol: ClassSymbol): T = {
