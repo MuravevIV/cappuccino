@@ -1,5 +1,6 @@
 package com.ilyamur.cappuccino.wiring
 
+import com.ilyamur.cappuccino.wiring
 import com.softwaremill.macwire._
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -21,7 +22,6 @@ object MacwireFactoryLighthouse extends App {
 
       override def apply: Config = config
     }
-
   }
 
   trait EmailService {
@@ -42,7 +42,6 @@ object MacwireFactoryLighthouse extends App {
 
       override def apply(address: String) = new AppUser(emailService, address)
     }
-
   }
 
   class AppUser(emailService: EmailService, address: String) extends User {
@@ -52,10 +51,12 @@ object MacwireFactoryLighthouse extends App {
     }
   }
 
-  class AppEmailService extends EmailService {
+  class AppEmailService(configProvider: EmailService.ConfigProvider) extends EmailService {
+
+    val smtpServer = configProvider().getString("smtp-server")
 
     override def sendEmail(address: String, text: String): Unit = {
-      println(s"Sending email to '${address}': '${text}")
+      println(s"Sending email to '${address}', using SMTP server '${smtpServer}': '${text}")
     }
   }
 
@@ -72,6 +73,7 @@ object MacwireFactoryLighthouse extends App {
   class ApplicationModule {
 
     val config = ConfigFactory.load()
+    def emailServiceConfigProvider = new EmailService.ConfigProvider(config.getConfig("email"))
 
     lazy val emailService = wire[AppEmailService]
     lazy val userFactory = wire[AppUser.Factory]
