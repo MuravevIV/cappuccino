@@ -73,7 +73,7 @@ object MacwireFactoryLighthouse extends App {
 
   //
 
-  class ApplicationModule {
+  trait ApplicationModule {
 
     val config = ConfigFactory.load()
     def emailServiceCProv = new EmailService.ConfigProvider(config)
@@ -83,8 +83,12 @@ object MacwireFactoryLighthouse extends App {
     lazy val spammer = wire[AppSpammer]
   }
 
+  class Application extends App with ApplicationModule {
+
+    spammer.sendEmails("Free Adderall!")
+  }
+
   //
 
-  val app = new ApplicationModule()
-  app.spammer.sendEmails("Free Adderall!")
+  (new Application()).main(this.args)
 }
