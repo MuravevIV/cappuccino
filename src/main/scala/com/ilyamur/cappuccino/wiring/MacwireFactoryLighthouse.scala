@@ -11,7 +11,7 @@ object MacwireFactoryLighthouse extends App {
 
   trait UserFactory {
 
-    def create(address: String): User
+    def apply(address: String): User
   }
 
   trait EmailService {
@@ -30,7 +30,7 @@ object MacwireFactoryLighthouse extends App {
 
     class Factory(emailService: EmailService) extends UserFactory {
 
-      def create(address: String) = new AppUser(emailService, address)
+      override def apply(address: String) = new AppUser(emailService, address)
     }
   }
 
@@ -51,8 +51,8 @@ object MacwireFactoryLighthouse extends App {
   class AppSpammer(userFactory: UserFactory) extends Spammer {
 
     override def sendEmails(text: String): Unit = {
-      userFactory.create("john@test.com").sendEmail(text)
-      userFactory.create("jane@test.com").sendEmail(text)
+      userFactory("john@test.com").sendEmail(text)
+      userFactory("jane@test.com").sendEmail(text)
     }
   }
 
@@ -60,13 +60,13 @@ object MacwireFactoryLighthouse extends App {
 
   class ApplicationModule {
 
-    lazy val appEmailService = wire[AppEmailService]
-    lazy val appUserFactory = wire[AppUser.Factory]
-    lazy val appSpammer = wire[AppSpammer]
+    lazy val emailService = wire[AppEmailService]
+    lazy val userFactory = wire[AppUser.Factory]
+    lazy val spammer = wire[AppSpammer]
   }
 
   //
 
   val app = new ApplicationModule()
-  app.appSpammer.sendEmails("Free Adderall!")
+  app.spammer.sendEmails("Free Adderall!")
 }
