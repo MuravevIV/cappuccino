@@ -1,6 +1,5 @@
 package com.ilyamur.cappuccino.wiring
 
-import com.ilyamur.cappuccino.wiring
 import com.softwaremill.macwire._
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -18,9 +17,9 @@ object MacwireFactoryLighthouse extends App {
 
   object EmailService {
 
-    class ConfigProvider(config: Config) extends (() => Config) {
+    class ConfigProvider(config: Config) {
 
-      override def apply: Config = config
+      def apply(): Config = config
     }
   }
 
@@ -42,6 +41,7 @@ object MacwireFactoryLighthouse extends App {
 
       override def apply(address: String) = new AppUser(emailService, address)
     }
+
   }
 
   class AppUser(emailService: EmailService, address: String) extends User {
@@ -73,7 +73,7 @@ object MacwireFactoryLighthouse extends App {
   class ApplicationModule {
 
     val config = ConfigFactory.load()
-    def emailServiceConfigProvider = new EmailService.ConfigProvider(config.getConfig("email"))
+    def emailServiceCProv = new EmailService.ConfigProvider(config.getConfig("email"))
 
     lazy val emailService = wire[AppEmailService]
     lazy val userFactory = wire[AppUser.Factory]
