@@ -9,7 +9,8 @@ object Dependencies {
   val macwireVersion = "2.3.0"
 
   val compileDependencies = Seq(
-    "com.softwaremill.macwire" %% "macros" % macwireVersion
+    "com.softwaremill.macwire" %% "macros" % macwireVersion,
+    "com.typesafe" % "config" % "1.3.3"
   )
 
   val testDependencies = Seq(
