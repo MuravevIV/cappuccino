@@ -59,7 +59,7 @@ object MacwireFactoryLighthouse extends App {
     private val log = LoggerFactory.getLogger(getClass)
 
     override def sendEmail(address: String, text: String): Unit = {
-      log.info(s"Sending email to '${address}', using SMTP server '${smtpServer}': '${text}")
+      log.info(s"Sending email to '${address}', using SMTP server '${smtpServer}': '${text}'")
     }
   }
 
@@ -73,10 +73,13 @@ object MacwireFactoryLighthouse extends App {
 
   //
 
-  trait ApplicationModule {
+  trait ApplicationConfigs {
 
     val config = ConfigFactory.load()
     def emailServiceCProv = new EmailService.ConfigProvider(config)
+  }
+
+  trait ApplicationModule extends ApplicationConfigs {
 
     lazy val emailService = wire[AppEmailService]
     lazy val userFactory = wire[AppUser.Factory]
@@ -90,5 +93,5 @@ object MacwireFactoryLighthouse extends App {
 
   //
 
-  (new Application()).main(this.args)
+  (new Application()).main(args)
 }
