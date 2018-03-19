@@ -6,7 +6,7 @@ class TodoItem(val id: Long, val text: String) {
 
   def isActive: Boolean = _isActive
 
-  def isCompleted: Boolean = !isActive
+  def isCompleted: Boolean = !_isActive
 
   def markCompleted(): Unit = {
     _isActive = false
