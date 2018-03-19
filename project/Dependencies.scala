@@ -5,7 +5,8 @@ object Dependencies {
   val compileDependencies = Seq(
     "com.softwaremill.macwire" %% "macros" % "2.3.0",
     "com.typesafe" % "config" % "1.3.3",
-    "org.slf4j" % "slf4j-api" % "1.7.25"
+    "org.slf4j" % "slf4j-api" % "1.7.25",
+    "org.apache.commons" % "commons-lang3" % "3.7"
   )
 
   val providedDependencies = Seq(
