@@ -1,6 +1,5 @@
 package com.ilyamur.cappuccino.sqltoolv3
 
-import com.ilyamur.cappuccino.sqltoolv3.Lighthouse.{ESqlContext, ESqlToolModule}
 import com.ilyamur.cappuccino.{Book, H2}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalatest.mockito.MockitoSugar
