@@ -32,7 +32,7 @@ class SqlToolV3Test extends FunSpec
     it("performs sanity check") {
 
       val module = new ESqlToolModule() {}
-      val sqlTool = module.sqlToolFactory(ESqlContext())
+      val sqlTool = module.toolFactory(ESqlContext())
 
       val books = List(
         Book(1, "Hear the Wind Sing", 1979),
