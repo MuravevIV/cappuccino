@@ -1,5 +1,6 @@
 package com.ilyamur.cappuccino.sqltool
 
+import com.ilyamur.cappuccino.{Book, H2}
 import org.h2.jdbcx.JdbcConnectionPool
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}

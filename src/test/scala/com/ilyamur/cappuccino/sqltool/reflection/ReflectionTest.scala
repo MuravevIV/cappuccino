@@ -1,6 +1,6 @@
 package com.ilyamur.cappuccino.sqltool.reflection
 
-import com.ilyamur.cappuccino.sqltool.Book
+import com.ilyamur.cappuccino.Book
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSpec, Matchers}
 

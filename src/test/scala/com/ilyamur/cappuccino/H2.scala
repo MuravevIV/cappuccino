@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino.sqltool
+package com.ilyamur.cappuccino
 
 import java.io.{File, FileReader}
 
