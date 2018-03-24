@@ -17,8 +17,12 @@ package object sqltoolv3 {
 
   //
 
-  case class ESqlContext(queryParameters: List[ESqlQueryParameter] = List.empty,
-                         dataSource: Option[DataSource] = None,
+  object ESqlContext {
+
+    def empty: ESqlContext = ESqlContext()
+  }
+
+  case class ESqlContext(dataSource: Option[DataSource] = None,
                          queryString: Option[String] = None,
                          queryStringParser: Option[SqlQueryParser] = None,
                          resultSet: Option[ResultSet] = None,
@@ -95,14 +99,16 @@ package object sqltoolv3 {
                   queryResultRowFactory: ESqlQueryResultRow.Factory,
                   fPattern: FPattern) {
 
-      def apply(ctx: ESqlContext): ESqlQuery = {
-        new ESqlQuery(ctx, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
+      def apply(ctx: ESqlContext = ESqlContext.empty,
+                queryParameters: List[ESqlQueryParameter] = List.empty): ESqlQuery = {
+        new ESqlQuery(ctx, queryParameters, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
       }
     }
 
   }
 
   class ESqlQuery(ctx: ESqlContext,
+                  queryParameters: List[ESqlQueryParameter],
                   queryResultFactory: ESqlQueryResult.Factory,
                   updateResultFactory: ESqlUpdateResult.Factory,
                   queryResultRowFactory: ESqlQueryResultRow.Factory,
@@ -112,10 +118,10 @@ package object sqltoolv3 {
 
     def params(pair: (String, Any), pairs: (String, Any)*): ESqlQuery = {
       val newQueryParameters = (pair :: pairs.toList).map { case (key, value) =>
-        new ESqlQueryParameter(key, value)
+        ESqlQueryParameter(key, value)
       }
-      val newCtx = ctx.copy(queryParameters = ctx.queryParameters ::: newQueryParameters)
-      new ESqlQuery(newCtx, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
+      val updQueryParameters = queryParameters ::: newQueryParameters
+      new ESqlQuery(ctx, updQueryParameters, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
     }
 
     def executeQuery(): ESqlQueryResult = {
@@ -172,7 +178,7 @@ package object sqltoolv3 {
 
     private def setParameters(preparedStatement: PreparedStatement, paramTokens: List[SqlQueryParamToken]) = {
       paramTokens.zipWithIndex.foreach { case (paramToken, index) =>
-        ctx.queryParameters.find(p => p.key == paramToken.name) match {
+        queryParameters.find(p => p.key == paramToken.name) match {
           case Some(param) =>
             preparedStatement.setObject(index + 1, param.value)
           case None =>
