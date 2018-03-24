@@ -6,33 +6,20 @@ import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryParamToken, SqlQueryParser
 import com.softwaremill.macwire._
 import javax.sql.DataSource
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime.universe._
 
 package object sqltoolv3 {
 
-  class Reflection {
-  }
+  class FPattern {
 
-  //
-
-  object ESqlContext {
-
-    def empty: ESqlContext = ESqlContext()
-  }
-
-  case class ESqlContext(dataSource: Option[DataSource] = None,
-                         queryString: Option[String] = None,
-                         queryStringParser: Option[SqlQueryParser] = None,
-                         resultSet: Option[ResultSet] = None,
-                         queryRows: List[ESqlQueryResultRow] = List.empty,
-                         updateRowCount: Option[Int] = None,
-                         reflectMap: mutable.Map[TypeTag[_], Reflect[_]] = mutable.Map.empty)
-
-  //
-
-  class Reflect[T] {
+    def using[C <: AutoCloseable, R](c: C)(f: C => R): R = {
+      try {
+        f(c)
+      } finally {
+        c.close()
+      }
+    }
   }
 
   //
@@ -75,20 +62,7 @@ package object sqltoolv3 {
   class ESqlExecutor(ctx: ESqlExecutor.Context, queryFactory: ESqlQuery.Factory) {
 
     def query(queryString: String): ESqlQuery = {
-      queryFactory.apply(ESqlQuery.Context(ctx, queryString, List.empty))
-    }
-  }
-
-  //
-
-  class FPattern {
-
-    def using[C <: AutoCloseable, R](c: C)(f: C => R): R = {
-      try {
-        f(c)
-      } finally {
-        c.close()
-      }
+      queryFactory.apply(ctx, queryString, List.empty)
     }
   }
 
@@ -105,7 +79,12 @@ package object sqltoolv3 {
                   queryResultRowFactory: ESqlQueryResultRow.Factory,
                   fPattern: FPattern) {
 
-      def apply(queryCtx: Context): ESqlQuery = {
+      def apply(executorCtx: ESqlExecutor.Context, queryString: String, queryParameters: List[ESqlQueryParameter]): ESqlQuery = {
+        val queryCtx = ESqlQuery.Context(executorCtx, queryString, List.empty)
+        apply(queryCtx)
+      }
+
+      def apply(queryCtx: ESqlQuery.Context): ESqlQuery = {
         new ESqlQuery(queryCtx, this, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
       }
     }
