@@ -1,10 +1,12 @@
 package com.ilyamur.cappuccino
 
-import java.sql.ResultSet
+import java.sql.{PreparedStatement, ResultSet}
 
-import com.softwaremill.macwire.wire
+import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryParamToken, SqlQueryParser, SqlQueryTehnologiaParser}
+import com.softwaremill.macwire._
 import javax.sql.DataSource
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime.universe._
 
@@ -18,9 +20,16 @@ package object sqltoolv3 {
   case class ESqlContext(queryParameters: List[ESqlQueryParameter] = List.empty,
                          dataSource: Option[DataSource] = None,
                          queryString: Option[String] = None,
+                         queryStringParser: Option[SqlQueryParser] = None,
                          resultSet: Option[ResultSet] = None,
                          queryRows: List[ESqlQueryResultRow] = List.empty,
-                         updateRowCount: Option[Int] = None)
+                         updateRowCount: Option[Int] = None,
+                         reflectMap: mutable.Map[TypeTag[_], Reflect[_]] = mutable.Map.empty)
+
+  //
+
+  class Reflect[T] {
+  }
 
   //
 
@@ -28,7 +37,7 @@ package object sqltoolv3 {
 
     class Factory(executorFactory: ESqlExecutor.Factory) {
 
-      def apply(ctx: ESqlContext): ESqlTool = {
+      def apply(ctx: ESqlContext = ESqlContext()): ESqlTool = {
         new ESqlTool(ctx, executorFactory)
       }
     }
@@ -112,9 +121,14 @@ package object sqltoolv3 {
     def executeQuery(): ESqlQueryResult = {
       require(ctx.dataSource.isDefined, "dataSource should be defined")
       require(ctx.queryString.isDefined, "queryString should be defined")
+      require(ctx.queryStringParser.isDefined, "queryStringParser should be defined")
+
+      val queryAst = ctx.queryStringParser.get.parse(ctx.queryString.get)
+      val paramTokens = queryAst.getParamTokens
 
       val rows = using(ctx.dataSource.get.getConnection) { connection =>
-        using(connection.prepareStatement(ctx.queryString.get)) { preparedStatement =>
+        using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
+          setParameters(preparedStatement, paramTokens)
           using(preparedStatement.executeQuery()) { resultSet =>
             toRows(resultSet)
           }
@@ -138,9 +152,15 @@ package object sqltoolv3 {
 
     def executeUpdate(): ESqlUpdateResult = {
       require(ctx.dataSource.isDefined, "dataSource should be defined")
+      require(ctx.queryString.isDefined, "queryString should be defined")
+      require(ctx.queryStringParser.isDefined, "queryStringParser should be defined")
+
+      val queryAst = ctx.queryStringParser.get.parse(ctx.queryString.get)
+      val paramTokens = queryAst.getParamTokens
 
       val rowCount = using(ctx.dataSource.get.getConnection) { connection =>
-        using(connection.prepareStatement(ctx.queryString.get)) { preparedStatement =>
+        using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
+          setParameters(preparedStatement, paramTokens)
           preparedStatement.executeUpdate()
         }
       }
@@ -149,12 +169,23 @@ package object sqltoolv3 {
 
       updateResultFactory(updCtx)
     }
+
+    private def setParameters(preparedStatement: PreparedStatement, paramTokens: List[SqlQueryParamToken]) = {
+      paramTokens.zipWithIndex.foreach { case (paramToken, index) =>
+        ctx.queryParameters.find(p => p.key == paramToken.name) match {
+          case Some(param) =>
+            preparedStatement.setObject(index + 1, param.value)
+          case None =>
+            // todo
+            throw new IllegalArgumentException()
+        }
+      }
+    }
   }
 
   //
 
-  class ESqlQueryParameter(key: String, value: Any) {
-  }
+  case class ESqlQueryParameter(key: String, value: Any)
 
   //
 
@@ -192,6 +223,23 @@ package object sqltoolv3 {
   class ESqlQueryResultRow(ctx: ESqlContext) {
 
     def as[T: TypeTag]: T = {
+      require(ctx.resultSet.isDefined, "resultSet should be defined")
+
+      /*      val ttag = typeTag[T]
+
+            ctx.reflectMap.get(ttag) {
+              case Some(reflect) =>
+                reflect
+              case _ =>
+                val reflect: Reflect[T] = resultSetReflection.ofType[T].prepareConstructorOn(ctx.resultSet.get)
+                ctx.reflectMap.put(ttag, reflect)
+                reflect
+            }
+
+            val t: T = reflect.createOn(ctx.resultSet.get)
+
+            t*/
+
       ???
     }
   }
@@ -221,6 +269,7 @@ package object sqltoolv3 {
   trait ESqlToolModule {
 
     lazy val fPattern = wire[FPattern]
+    lazy val queryParser = wire[SqlQueryTehnologiaParser]
 
     lazy val toolFactory = wire[ESqlTool.Factory]
     lazy val executorFactory = wire[ESqlExecutor.Factory]
