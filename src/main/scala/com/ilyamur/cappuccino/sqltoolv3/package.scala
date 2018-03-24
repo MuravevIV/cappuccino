@@ -94,21 +94,23 @@ package object sqltoolv3 {
 
   object ESqlQuery {
 
+    case class Context(queryParameters: List[ESqlQueryParameter])
+
     class Factory(queryResultFactory: ESqlQueryResult.Factory,
                   updateResultFactory: ESqlUpdateResult.Factory,
                   queryResultRowFactory: ESqlQueryResultRow.Factory,
                   fPattern: FPattern) {
 
-      def apply(ctx: ESqlContext = ESqlContext.empty,
-                queryParameters: List[ESqlQueryParameter] = List.empty): ESqlQuery = {
-        new ESqlQuery(ctx, queryParameters, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
+      def apply(sqlCtx: ESqlContext, queryCtx: Context): ESqlQuery = {
+        new ESqlQuery(sqlCtx, queryCtx, this, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
       }
     }
 
   }
 
-  class ESqlQuery(ctx: ESqlContext,
-                  queryParameters: List[ESqlQueryParameter],
+  class ESqlQuery(sqlCtx: ESqlContext,
+                  queryCtx: ESqlQuery.Context,
+                  queryFactory: ESqlQuery.Factory,
                   queryResultFactory: ESqlQueryResult.Factory,
                   updateResultFactory: ESqlUpdateResult.Factory,
                   queryResultRowFactory: ESqlQueryResultRow.Factory,
@@ -120,19 +122,19 @@ package object sqltoolv3 {
       val newQueryParameters = (pair :: pairs.toList).map { case (key, value) =>
         ESqlQueryParameter(key, value)
       }
-      val updQueryParameters = queryParameters ::: newQueryParameters
-      new ESqlQuery(ctx, updQueryParameters, queryResultFactory, updateResultFactory, queryResultRowFactory, fPattern)
+      val updQueryCtx = queryCtx.copy(queryParameters = queryCtx.queryParameters ::: newQueryParameters)
+      queryFactory(sqlCtx, updQueryCtx)
     }
 
     def executeQuery(): ESqlQueryResult = {
-      require(ctx.dataSource.isDefined, "dataSource should be defined")
-      require(ctx.queryString.isDefined, "queryString should be defined")
-      require(ctx.queryStringParser.isDefined, "queryStringParser should be defined")
+      require(sqlCtx.dataSource.isDefined, "dataSource should be defined")
+      require(sqlCtx.queryString.isDefined, "queryString should be defined")
+      require(sqlCtx.queryStringParser.isDefined, "queryStringParser should be defined")
 
-      val queryAst = ctx.queryStringParser.get.parse(ctx.queryString.get)
+      val queryAst = sqlCtx.queryStringParser.get.parse(sqlCtx.queryString.get)
       val paramTokens = queryAst.getParamTokens
 
-      val rows = using(ctx.dataSource.get.getConnection) { connection =>
+      val rows = using(sqlCtx.dataSource.get.getConnection) { connection =>
         using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
           setParameters(preparedStatement, paramTokens)
           using(preparedStatement.executeQuery()) { resultSet =>
@@ -141,13 +143,13 @@ package object sqltoolv3 {
         }
       }
 
-      val updCtx = ctx.copy(queryRows = rows)
+      val updCtx = sqlCtx.copy(queryRows = rows)
 
       queryResultFactory(updCtx)
     }
 
     private def toRows(resultSet: ResultSet): List[ESqlQueryResultRow] = {
-      val updCtx = ctx.copy(resultSet = Some(resultSet))
+      val updCtx = sqlCtx.copy(resultSet = Some(resultSet))
       val result = ArrayBuffer.empty[ESqlQueryResultRow]
       while (resultSet.next()) {
         val row = queryResultRowFactory(updCtx)
@@ -157,28 +159,28 @@ package object sqltoolv3 {
     }
 
     def executeUpdate(): ESqlUpdateResult = {
-      require(ctx.dataSource.isDefined, "dataSource should be defined")
-      require(ctx.queryString.isDefined, "queryString should be defined")
-      require(ctx.queryStringParser.isDefined, "queryStringParser should be defined")
+      require(sqlCtx.dataSource.isDefined, "dataSource should be defined")
+      require(sqlCtx.queryString.isDefined, "queryString should be defined")
+      require(sqlCtx.queryStringParser.isDefined, "queryStringParser should be defined")
 
-      val queryAst = ctx.queryStringParser.get.parse(ctx.queryString.get)
+      val queryAst = sqlCtx.queryStringParser.get.parse(sqlCtx.queryString.get)
       val paramTokens = queryAst.getParamTokens
 
-      val rowCount = using(ctx.dataSource.get.getConnection) { connection =>
+      val rowCount = using(sqlCtx.dataSource.get.getConnection) { connection =>
         using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
           setParameters(preparedStatement, paramTokens)
           preparedStatement.executeUpdate()
         }
       }
 
-      val updCtx = ctx.copy(updateRowCount = Some(rowCount))
+      val updCtx = sqlCtx.copy(updateRowCount = Some(rowCount))
 
       updateResultFactory(updCtx)
     }
 
     private def setParameters(preparedStatement: PreparedStatement, paramTokens: List[SqlQueryParamToken]) = {
       paramTokens.zipWithIndex.foreach { case (paramToken, index) =>
-        queryParameters.find(p => p.key == paramToken.name) match {
+        queryCtx.queryParameters.find(p => p.key == paramToken.name) match {
           case Some(param) =>
             preparedStatement.setObject(index + 1, param.value)
           case None =>
