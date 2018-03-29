@@ -7,6 +7,6 @@ lazy val root = (project in file("."))
     organization := "com.ilyamur",
     name := "cappuccino",
     version := "1.0-SNAPSHOT",
-    scalaVersion := "2.12.4",
-    libraryDependencies ++= testDependencies
+    scalaVersion := "2.11.1",
+    libraryDependencies ++= compileDependencies
   )
