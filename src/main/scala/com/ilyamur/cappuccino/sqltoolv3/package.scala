@@ -7,6 +7,7 @@ import com.softwaremill.macwire._
 import javax.sql.DataSource
 
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.runtime.currentMirror
 import scala.reflect.runtime.universe._
 
 package object sqltoolv3 {
@@ -88,7 +89,7 @@ package object sqltoolv3 {
       queryResultFactory.apply(rows)
     }
 
-    private def toRows(resultSet: ResultSet): List[ESqlQueryResultRow] = {
+    private def toRows(resultSet: ResultSet): ESqlQueryResultRows = {
       val result = ArrayBuffer.empty[ESqlQueryResultRow]
       while (resultSet.next()) {
         val row = queryResultRowFactory.apply(resultSet)
@@ -147,6 +148,53 @@ package object sqltoolv3 {
 
   //
 
+  class Reflector(reflectorOfCaseClassFactory: ReflectorOfCaseClass.Factory[_]) {
+
+    def ofType[T: TypeTag]: ReflectorOfType[T] = {
+      val ttag = typeTag[T]
+      // todo cache?
+      if (ttag.tpe.typeSymbol.asClass.isCaseClass) {
+        reflectorOfCaseClassFactory.apply()
+      } else {
+        ???
+      }
+    }
+  }
+
+  trait ReflectorOfType[T] {
+
+    def forResultSet(resultSet: ResultSet): ReflectorForResultSet[T]
+  }
+
+  object ReflectorOfCaseClass {
+
+    type Factory[T] = () => ReflectorOfCaseClass[T]
+  }
+
+  class ReflectorOfCaseClass[T] extends ReflectorOfType[T] {
+
+    override def forResultSet(resultSet: ResultSet): ReflectorForResultSet[T] = {
+      resultSet.getMetaData
+      ???
+    }
+
+    def getConstructor(classSymbol: ClassSymbol) = {
+      val ttag = getTypeTag(classSymbol)
+      currentMirror.reflectClass(classSymbol).reflectConstructor(
+        ttag.tpe.members.filter(m =>
+          m.isMethod && m.asMethod.isConstructor
+        ).iterator.toSeq.head.asMethod
+      )
+    }
+  }
+
+  class ReflectorForResultSet[T] {
+
+    def applyConstructor: T = ???
+  }
+
+  //
+
   type ESqlQueryResultRows = List[ESqlQueryResultRow]
 
   object ESqlQueryResultRow {
@@ -154,27 +202,11 @@ package object sqltoolv3 {
     type Factory = (ResultSet) => ESqlQueryResultRow
   }
 
-  class ESqlQueryResultRow(resultSet: ResultSet) {
+  class ESqlQueryResultRow(resultSet: ResultSet,
+                           reflector: Reflector) {
 
     def as[T: TypeTag]: T = {
-      /*      val ttag = typeTag[T]
-
-            ctx.reflectMap.get(ttag) {
-              case Some(reflect) =>
-                reflect
-              case _ =>
-                val reflect: Reflect[T] = resultSetReflection.ofType[T].prepareConstructorOn(ctx.resultSet.get)
-                ctx.reflectMap.put(ttag, reflect)
-                reflect
-            }
-
-            val t: T = reflect.createOn(ctx.resultSet.get)
-
-            t*/
-
-      // val c = ctx
-
-      ???
+      reflector.ofType[T].forResultSet(resultSet).applyConstructor
     }
   }
 
@@ -197,6 +229,7 @@ package object sqltoolv3 {
   trait ESqlToolModule {
 
     lazy val fPattern = wire[FPattern]
+    lazy val reflector = wire[Reflector]
     lazy val queryParser = wire[SqlQueryTehnologiaParser]
 
     lazy val tool = wire[ESqlTool]
