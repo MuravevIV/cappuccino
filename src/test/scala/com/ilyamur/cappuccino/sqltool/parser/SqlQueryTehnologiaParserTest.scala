@@ -16,8 +16,8 @@ class SqlQueryTehnologiaParserTest extends FunSpec
       val queryAst = parser.parse("SELECT 1 FROM dual")
 
       queryAst.tokens shouldEqual List(SqlQueryTextToken("SELECT 1 FROM dual"))
-      queryAst.getNormalForm shouldEqual "SELECT 1 FROM dual"
-      queryAst.getParamTokens shouldEqual List.empty
+      queryAst.normalForm shouldEqual "SELECT 1 FROM dual"
+      queryAst.paramTokens shouldEqual List.empty
     }
 
     it("parses single-parameter query") {
@@ -29,8 +29,8 @@ class SqlQueryTehnologiaParserTest extends FunSpec
         SqlQueryParamToken(name = "param"),
         SqlQueryTextToken(" FROM dual")
       )
-      queryAst.getNormalForm shouldEqual "SELECT ? FROM dual"
-      queryAst.getParamTokens shouldEqual List(SqlQueryParamToken(name = "param"))
+      queryAst.normalForm shouldEqual "SELECT ? FROM dual"
+      queryAst.paramTokens shouldEqual List(SqlQueryParamToken(name = "param"))
     }
 
     it("parses multiple-parameter query") {
@@ -43,8 +43,8 @@ class SqlQueryTehnologiaParserTest extends FunSpec
         SqlQueryTextToken(" FROM dual WHERE 1 = "),
         SqlQueryParamToken(name = "param2")
       )
-      queryAst.getNormalForm shouldEqual "SELECT ? FROM dual WHERE 1 = ?"
-      queryAst.getParamTokens shouldEqual List(
+      queryAst.normalForm shouldEqual "SELECT ? FROM dual WHERE 1 = ?"
+      queryAst.paramTokens shouldEqual List(
         SqlQueryParamToken(name = "param1"),
         SqlQueryParamToken(name = "param2")
       )

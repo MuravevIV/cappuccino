@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino.sqltoolv3
+package com.ilyamur.cappuccino.sqltoolv3.sql
 
 import com.ilyamur.cappuccino.{Book, H2}
 import org.h2.jdbcx.JdbcConnectionPool

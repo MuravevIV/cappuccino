@@ -1,4 +1,4 @@
-package com.ilyamur.cappuccino
+package com.ilyamur.cappuccino.sqltoolv3
 
 import java.sql.{PreparedStatement, ResultSet}
 
@@ -6,11 +6,10 @@ import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryParamToken, SqlQueryParser
 import com.softwaremill.macwire._
 import javax.sql.DataSource
 
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.runtime.currentMirror
 import scala.reflect.runtime.universe._
 
-package object sqltoolv3 {
+package object sql {
 
   class FPattern {
 
@@ -73,49 +72,40 @@ package object sqltoolv3 {
     }
 
     def executeQuery(): ESqlQueryResult = {
-
-      val queryAst = queryParser.parse(queryString)
-      val paramTokens = queryAst.getParamTokens
-
       val rows = using(dataSource.getConnection) { connection =>
-        using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
-          setParameters(preparedStatement, paramTokens)
+        val queryAst = queryParser.parse(queryString)
+        using(connection.prepareStatement(queryAst.normalForm)) { preparedStatement =>
+          setParameters(preparedStatement, queryAst.paramTokens)
           using(preparedStatement.executeQuery()) { resultSet =>
             toRows(resultSet)
           }
         }
       }
-
       queryResultFactory.apply(rows)
     }
 
     private def toRows(resultSet: ResultSet): ESqlQueryResultRows = {
-      val result = ArrayBuffer.empty[ESqlQueryResultRow]
-      while (resultSet.next()) {
-        val row = queryResultRowFactory.apply(resultSet)
-        result.append(row)
-      }
-      result.toList
+      Stream
+        .continually(resultSet)
+        .takeWhile(_.next)
+        .map(queryResultRowFactory.apply)
+        .toList
     }
 
     def executeUpdate(): ESqlUpdateResult = {
-
-      val queryAst = queryParser.parse(queryString)
-      val paramTokens = queryAst.getParamTokens
-
       val rowCount = using(dataSource.getConnection) { connection =>
-        using(connection.prepareStatement(queryAst.getNormalForm)) { preparedStatement =>
-          setParameters(preparedStatement, paramTokens)
+        val queryAst = queryParser.parse(queryString)
+        using(connection.prepareStatement(queryAst.normalForm)) { preparedStatement =>
+          setParameters(preparedStatement, queryAst.paramTokens)
           preparedStatement.executeUpdate()
         }
       }
-
       updateResultFactory.apply(rowCount)
     }
 
-    private def setParameters(preparedStatement: PreparedStatement, paramTokens: List[SqlQueryParamToken]) = {
+    private def setParameters(preparedStatement: PreparedStatement, paramTokens: List[SqlQueryParamToken]): Unit = {
       paramTokens.zipWithIndex.foreach { case (paramToken, index) =>
-        queryParameters.find(p => p.key == paramToken.name) match {
+        queryParameters.find(_.key == paramToken.name) match {
           case Some(param) =>
             preparedStatement.setObject(index + 1, param.value)
           case None =>
@@ -142,7 +132,7 @@ package object sqltoolv3 {
   class ESqlQueryResult(rows: ESqlQueryResultRows) {
 
     def asList[T: TypeTag]: List[T] = {
-      rows.map(row => row.as[T])
+      rows.map(_.as[T])
     }
   }
 
@@ -178,7 +168,7 @@ package object sqltoolv3 {
       ???
     }
 
-    def getConstructor(classSymbol: ClassSymbol) = {
+    def getConstructor(classSymbol: ClassSymbol): MethodMirror = {
       val ttag = getTypeTag(classSymbol)
       currentMirror.reflectClass(classSymbol).reflectConstructor(
         ttag.tpe.members.filter(m =>

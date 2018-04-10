@@ -45,7 +45,7 @@ case class SqlQuery(queryString: String,
 
   private def prepareStatement(connection: Connection) = {
     val queryAst = parser.parse(queryString)
-    val normalForm = queryAst.getNormalForm
+    val normalForm = queryAst.normalForm
 
     val preparedStatement = connection.prepareStatement(normalForm)
 
@@ -53,7 +53,7 @@ case class SqlQuery(queryString: String,
       (queryParameter.name, queryParameter.value)
     }.toMap
 
-    queryAst.getParamTokens.zipWithIndex.foreach { case (paramToken, idx) =>
+    queryAst.paramTokens.zipWithIndex.foreach { case (paramToken, idx) =>
       queryParameterMap.get(paramToken.name) match {
         case Some(value) =>
           preparedStatement.setObject(idx + 1, value)
