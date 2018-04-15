@@ -1,12 +1,13 @@
 package com.ilyamur.cappuccino.sqltoolv3
 
 import java.sql.{PreparedStatement, ResultSet}
+import java.util.concurrent.TimeUnit
 
-import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryParamToken, SqlQueryParser, SqlQueryTehnologiaParser}
+import com.google.common.cache.{Cache, CacheBuilder, CacheLoader}
+import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryAst, SqlQueryParamToken, SqlQueryParser, SqlQueryTehnologiaParser}
 import com.softwaremill.macwire._
 import javax.sql.DataSource
 
-import scala.reflect.runtime.currentMirror
 import scala.reflect.runtime.universe._
 
 package object sql {
@@ -42,6 +43,33 @@ package object sql {
 
     def query(queryString: String): ESqlQuery = {
       queryFactory.apply(dataSource, queryString, List.empty)
+    }
+  }
+
+  //
+
+  class CacheM {
+
+    def apply()
+  }
+
+  //
+
+  class CachedSqlQueryParser(childQueryParser: ChildSqlQueryParser) extends SqlQueryParser {
+
+    private val cache: Cache[String, SqlQueryAst] = {
+      // todo conf
+      // todo JMX stats
+      CacheBuilder.newBuilder()
+        .maximumSize(1024)
+        .expireAfterWrite(600, TimeUnit.SECONDS)
+        .build()
+    }
+
+    override def parse(queryString: String): SqlQueryAst = {
+      cache.get(queryString, { () =>
+        childQueryParser.parse(queryString)
+      })
     }
   }
 
@@ -146,8 +174,8 @@ package object sql {
       if (ttag.tpe.typeSymbol.asClass.isCaseClass) {
         reflectorOfCaseClassFactory.apply()
       } else {
-        ???
       }
+      ???
     }
   }
 
@@ -169,12 +197,13 @@ package object sql {
     }
 
     def getConstructor(classSymbol: ClassSymbol): MethodMirror = {
-      val ttag = getTypeTag(classSymbol)
+      /*val ttag = getTypeTag(classSymbol)
       currentMirror.reflectClass(classSymbol).reflectConstructor(
         ttag.tpe.members.filter(m =>
           m.isMethod && m.asMethod.isConstructor
         ).iterator.toSeq.head.asMethod
-      )
+      )*/
+      ???
     }
   }
 
@@ -220,7 +249,9 @@ package object sql {
 
     lazy val fPattern = wire[FPattern]
     lazy val reflector = wire[Reflector]
-    lazy val queryParser = wire[SqlQueryTehnologiaParser]
+
+    lazy val childQueryParser: ChildSqlQueryParser = wire[SqlQueryTehnologiaParser]
+    lazy val cachedQueryParser: SqlQueryParser = wire[CachedSqlQueryParser]
 
     lazy val tool = wire[ESqlTool]
     lazy val executorFactory = (_: DataSource) => wire[ESqlExecutor]
