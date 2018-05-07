@@ -1,27 +1,17 @@
 package com.ilyamur.cappuccino.sqltoolv3
 
-import java.sql.{PreparedStatement, ResultSet}
-import java.util.concurrent.TimeUnit
+import java.sql.{PreparedStatement, ResultSet, ResultSetMetaData}
 
-import com.google.common.cache.{Cache, CacheBuilder, CacheLoader}
-import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryAst, SqlQueryParamToken, SqlQueryParser, SqlQueryTehnologiaParser}
+import com.ilyamur.cappuccino.sqltool.parser.{SqlQueryParamToken, SqlQueryParser}
+import com.ilyamur.cappuccino.sqltoolv3.fpattern.{FPattern, FPatternModule}
+import com.ilyamur.cappuccino.sqltoolv3.parser.ParserModule
+import com.ilyamur.cappuccino.sqltoolv3.reflector.{Reflector, ReflectorModule}
 import com.softwaremill.macwire._
 import javax.sql.DataSource
 
 import scala.reflect.runtime.universe._
 
 package object sql {
-
-  class FPattern {
-
-    def using[C <: AutoCloseable, R](c: C)(f: C => R): R = {
-      try {
-        f(c)
-      } finally {
-        c.close()
-      }
-    }
-  }
 
   //
 
@@ -43,33 +33,6 @@ package object sql {
 
     def query(queryString: String): ESqlQuery = {
       queryFactory.apply(dataSource, queryString, List.empty)
-    }
-  }
-
-  //
-
-  class CacheM {
-
-    def apply()
-  }
-
-  //
-
-  class CachedSqlQueryParser(childQueryParser: ChildSqlQueryParser) extends SqlQueryParser {
-
-    private val cache: Cache[String, SqlQueryAst] = {
-      // todo conf
-      // todo JMX stats
-      CacheBuilder.newBuilder()
-        .maximumSize(1024)
-        .expireAfterWrite(600, TimeUnit.SECONDS)
-        .build()
-    }
-
-    override def parse(queryString: String): SqlQueryAst = {
-      cache.get(queryString, { () =>
-        childQueryParser.parse(queryString)
-      })
     }
   }
 
@@ -100,8 +63,8 @@ package object sql {
     }
 
     def executeQuery(): ESqlQueryResult = {
+      val queryAst = queryParser.parse(queryString)
       val rows = using(dataSource.getConnection) { connection =>
-        val queryAst = queryParser.parse(queryString)
         using(connection.prepareStatement(queryAst.normalForm)) { preparedStatement =>
           setParameters(preparedStatement, queryAst.paramTokens)
           using(preparedStatement.executeQuery()) { resultSet =>
@@ -113,16 +76,15 @@ package object sql {
     }
 
     private def toRows(resultSet: ResultSet): ESqlQueryResultRows = {
-      Stream
-        .continually(resultSet)
+      Stream.continually(resultSet)
         .takeWhile(_.next)
         .map(queryResultRowFactory.apply)
         .toList
     }
 
     def executeUpdate(): ESqlUpdateResult = {
+      val queryAst = queryParser.parse(queryString)
       val rowCount = using(dataSource.getConnection) { connection =>
-        val queryAst = queryParser.parse(queryString)
         using(connection.prepareStatement(queryAst.normalForm)) { preparedStatement =>
           setParameters(preparedStatement, queryAst.paramTokens)
           preparedStatement.executeUpdate()
@@ -166,50 +128,30 @@ package object sql {
 
   //
 
-  class Reflector(reflectorOfCaseClassFactory: ReflectorOfCaseClass.Factory[_]) {
 
-    def ofType[T: TypeTag]: ReflectorOfType[T] = {
-      val ttag = typeTag[T]
-      // todo cache?
-      if (ttag.tpe.typeSymbol.asClass.isCaseClass) {
-        reflectorOfCaseClassFactory.apply()
-      } else {
-      }
-      ???
+  case class ESqlCellMetadata(columnType: Int, columnName: String) {
+
+    def this(resultSetMetaData: ResultSetMetaData, column: Int) = {
+      this(
+        columnType = resultSetMetaData.getColumnType(column),
+        columnName = Option.apply(resultSetMetaData.getColumnName(column)).map(_.toLowerCase()).orNull
+      )
     }
   }
 
-  trait ReflectorOfType[T] {
+  class ESqlMetaData(resultSetMetaData: ResultSetMetaData) extends Seq[ESqlCellMetadata] {
 
-    def forResultSet(resultSet: ResultSet): ReflectorForResultSet[T]
-  }
-
-  object ReflectorOfCaseClass {
-
-    type Factory[T] = () => ReflectorOfCaseClass[T]
-  }
-
-  class ReflectorOfCaseClass[T] extends ReflectorOfType[T] {
-
-    override def forResultSet(resultSet: ResultSet): ReflectorForResultSet[T] = {
-      resultSet.getMetaData
-      ???
+    val cellMetadataArray = (1 to resultSetMetaData.getColumnCount).map { column =>
+      new ESqlCellMetadata(resultSetMetaData, column)
     }
 
-    def getConstructor(classSymbol: ClassSymbol): MethodMirror = {
-      /*val ttag = getTypeTag(classSymbol)
-      currentMirror.reflectClass(classSymbol).reflectConstructor(
-        ttag.tpe.members.filter(m =>
-          m.isMethod && m.asMethod.isConstructor
-        ).iterator.toSeq.head.asMethod
-      )*/
-      ???
-    }
-  }
+    val columnCount = resultSetMetaData.getColumnCount
 
-  class ReflectorForResultSet[T] {
+    override def length: Int = cellMetadataArray.length
 
-    def applyConstructor: T = ???
+    override def apply(idx: Int): ESqlCellMetadata = cellMetadataArray.apply(idx)
+
+    override def iterator: Iterator[ESqlCellMetadata] = cellMetadataArray.iterator
   }
 
   //
@@ -221,11 +163,16 @@ package object sql {
     type Factory = (ResultSet) => ESqlQueryResultRow
   }
 
-  class ESqlQueryResultRow(resultSet: ResultSet,
-                           reflector: Reflector) {
+  class ESqlQueryResultRow(resultSet: ResultSet, reflector: Reflector) {
+
+    private val metaData = new ESqlMetaData(resultSet.getMetaData)
+    private val data = (1 to metaData.columnCount).map { columnIndex =>
+      resultSet.getObject(columnIndex)
+    }
 
     def as[T: TypeTag]: T = {
-      reflector.ofType[T].forResultSet(resultSet).applyConstructor
+      val ofType = reflector.forType[T](metaData)
+      ofType.createInstance[T](data)
     }
   }
 
@@ -245,13 +192,7 @@ package object sql {
 
   //
 
-  trait ESqlToolModule {
-
-    lazy val fPattern = wire[FPattern]
-    lazy val reflector = wire[Reflector]
-
-    lazy val childQueryParser: ChildSqlQueryParser = wire[SqlQueryTehnologiaParser]
-    lazy val cachedQueryParser: SqlQueryParser = wire[CachedSqlQueryParser]
+  trait ESqlToolModule extends FPatternModule with ReflectorModule with ParserModule {
 
     lazy val tool = wire[ESqlTool]
     lazy val executorFactory = (_: DataSource) => wire[ESqlExecutor]

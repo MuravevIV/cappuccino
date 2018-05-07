@@ -16,9 +16,10 @@ object Dependencies {
   )
 
   val testDependencies = Seq(
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.scalacheck" % "scalacheck_2.12" % "1.13.5" % "test",
-    "org.mockito" % "mockito-core" % "2.8.47" % "test",
+    "org.scalatest" %% "scalatest" % "3.0.1" % Test,
+    "org.scalacheck" % "scalacheck_2.12" % "1.13.5" % Test,
+    "org.mockito" % "mockito-core" % "2.8.47" % Test,
+    "junit" % "junit" % "4.12" % Test,
     "com.h2database" % "h2" % "1.4.196" % Test
   )
 }

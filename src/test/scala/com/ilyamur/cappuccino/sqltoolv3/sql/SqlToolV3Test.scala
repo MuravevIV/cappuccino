@@ -57,8 +57,13 @@ class SqlToolV3Test extends FunSpec
           .verifyUpdates()
       }
 
+      /*
+      // todo review an idea - custom string interpolator?
+      executor.query(sql"SELECT year, title, id FROM book WHERE year > ${1900} ORDER BY year")
+       */
+
       val modernBooks = executor
-        .query("SELECT year, title, id FROM book WHERE year > <<year>> ORDER BY year")
+        .query(s"SELECT year, title, id FROM book WHERE year > <<year>> ORDER BY year")
         .params("year" -> 1900)
         .executeQuery()
         .asList[Book]
