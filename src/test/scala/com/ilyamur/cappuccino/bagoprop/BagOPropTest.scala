@@ -12,14 +12,14 @@ class BagOPropTest extends FunSuite
   val configProvider = mock[ConfigProvider]
   val bagoprop = new BagOProp(configProvider)
 
-  val entityBaseConfigStringRaw = "{type: entity}"
-  val entityBaseConfigStringEnriched = "{type: entity}"
+  val entityBaseConfigStringRaw = "{ type: entity }"
+  val entityBaseConfigStringEnriched = "{ type: entity }"
 
-  val entityAnimalConfigStringRaw = "{__extends: entity/base.conf, speed: 500}"
-  val entityAnimalConfigStringEnriched = "{type: entity, speed: 500}"
+  val entityAnimalConfigStringRaw = "{ __extends: entity/base.conf, speed: 500 }"
+  val entityAnimalConfigStringEnriched = "{ type: entity, speed: 500 }"
 
-  val entityCatConfigStringRaw = "{__extends: entity/animal.conf, speed: 700, sound: meow}"
-  val entityCatConfigStringEnriched = "{type: entity, speed: 700, sound: meow}"
+  val entityCatConfigStringRaw = "{ __extends: entity/animal.conf, speed: 700, sound: meow }"
+  val entityCatConfigStringEnriched = "{ type: entity, speed: 700, sound: meow }"
 
   when(configProvider.getConfig("entity/base.conf")).thenReturn(ConfigFactory.parseString(entityBaseConfigStringRaw))
   when(configProvider.getConfig("entity/animal.conf")).thenReturn(ConfigFactory.parseString(entityAnimalConfigStringRaw))

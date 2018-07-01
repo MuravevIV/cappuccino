@@ -13,20 +13,22 @@ class BagOProp(configProvider: ConfigProvider) {
     enrichConfig(config)
   }
   
-  private def enrichConfig(c: Config): Config = {
-    val configMap = configToMap(c)
-      .map { case (key, configValue) =>
-        if (key == "__extends") {
-          val parentConfig = getConfig(configValue.unwrapped().toString)
-          configToMap(parentConfig)
-        } else {
-          Map(key -> configValue)
-        }
-      }
-      .flatten
-      .toMap
+  private def enrichConfig(config: Config): Config = {
 
-    mapToConfig(configMap)
+    val g = configToMap(config)
+      .groupBy { case (key, _) =>
+        key == "__extends"
+      }
+
+    val complexConfigPart = g.getOrElse(true, Map.empty)
+    complexConfigPart.get("__extends") match {
+      case Some(configValue) =>
+        val parentConfig = getConfig(configValue.unwrapped().toString)
+        val ownConfig = mapToConfig(g.getOrElse(false, Map.empty))
+        ownConfig.withFallback(parentConfig)
+      case _ =>
+        config
+    }
   }
 
   private def configToMap(c: Config): Map[String, ConfigValue] = {
