@@ -6,25 +6,25 @@ import scala.collection.JavaConverters._
 
 class BagOProp(configProvider: ConfigProvider) {
 
-  implicit val classLoader = getClass.getClassLoader
+  private val EXTENDS_PROPERTY = "__extends"
 
   def getConfig(configPath: String): Config = {
     val config = configProvider.getConfig(configPath)
     enrichConfig(config)
   }
-  
+
   private def enrichConfig(config: Config): Config = {
 
-    val g = configToMap(config)
+    val configGroup = configToMap(config)
       .groupBy { case (key, _) =>
-        key == "__extends"
+        key == EXTENDS_PROPERTY
       }
 
-    val complexConfigPart = g.getOrElse(true, Map.empty)
-    complexConfigPart.get("__extends") match {
+    val complexConfigPart = configGroup.getOrElse(true, Map.empty)
+    complexConfigPart.get(EXTENDS_PROPERTY) match {
       case Some(configValue) =>
         val parentConfig = getConfig(configValue.unwrapped().toString)
-        val ownConfig = mapToConfig(g.getOrElse(false, Map.empty))
+        val ownConfig = mapToConfig(configGroup.getOrElse(false, Map.empty))
         ownConfig.withFallback(parentConfig)
       case _ =>
         config
